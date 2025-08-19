@@ -1,0 +1,241 @@
+/* === Global Reset + Font === */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f3f4f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
+/* === Phone Frame === */
+.phone-frame {
+  width: 390px;
+  height: 844px;
+  margin: 1rem auto;
+  padding: 1.5rem 1rem;
+  border: 8px solid #1f2937;
+  border-radius: 2rem;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Notch */
+.phone-frame::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 18px;
+  background: #1f2937;
+  border-radius: 0 0 1rem 1rem;
+}
+
+/* Role Selector Container */
+.role-selector {
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* === App Title === */
+.app-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.4;
+  margin-bottom: 1rem;
+  color: #1f2937;
+}
+.app-title .subtitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* Dropdowns */
+select {
+  width: 100%;
+  max-width: 340px;
+  margin: 0.4rem auto 1rem auto;
+  padding: 0.9rem;
+  border-radius: 0.75rem;
+  border: 2px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: block;
+}
+select:focus {
+  outline: none;
+  border: 2px solid #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+
+/* Labels */
+.dropdown-label {
+  display: block;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin: 0.8rem 0 0.3rem 0;
+  color: #374151;
+}
+
+/* === Search Input & Buttons === */
+input[type="text"] {
+  width: 100%;
+  max-width: 340px;
+  margin: 0.3rem auto;
+  padding: 0.9rem;
+  border-radius: 9999px;
+  border: 2px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  display: block;
+}
+input[type="text"]:focus {
+  border: 2px solid #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+}
+
+/* Search + Mic Buttons */
+button.search-btn,
+button.voice-btn {
+  padding: 0.75rem 1rem;
+  margin: 0.3rem;
+  border-radius: 9999px;
+  border: none;
+  background: #3b82f6;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+button.search-btn:hover,
+button.voice-btn:hover {
+  background: #2563eb;
+}
+button.search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Domain / General Toggle === */
+.toggle-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  margin: 0.5rem;
+  border-radius: 9999px;
+  border: 2px solid #d1d5db;
+  background: #f9fafb;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+}
+.toggle-pill.active {
+  border-color: #374151;
+  background: #fff;
+}
+.toggle-indicator.red { background: #ef4444; }
+.toggle-indicator.green { background: #10b981; }
+
+/* === Skills Grid === */
+.skills-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 1.2rem;
+  width: 100%;
+  max-width: 340px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* === Skill Cards === */
+.skill-card {
+  border-radius: 0.75rem;
+  padding: 1rem;
+  font-weight: 700;
+  text-align: center;
+  font-size: 1.05rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: all 0.25s ease-in-out;
+  cursor: pointer;
+  position: relative;
+}
+
+/* Skill text → now always black */
+.skill-text {
+  color: #000;
+  text-shadow: none;
+  display: inline-block;
+  width: 100%;
+}
+
+/* Hover effect */
+.skill-card:hover {
+  transform: scale(1.07);
+  box-shadow: 0 0 15px rgba(66,133,244,0.7),
+              0 0 25px rgba(255,255,255,0.6);
+}
+.skill-card::after {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 1rem;
+  background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.skill-card:hover::after {
+  opacity: 1;
+  animation: sparkle 2s infinite ease-in-out;
+}
+@keyframes sparkle {
+  0%, 100% { transform: scale(0.95); opacity: 0.4; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+/* === Expand Button === */
+button.expand-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 9999px;
+  border: none;
+  background: #3b82f6;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+button.expand-btn:hover {
+  background: #2563eb;
+}

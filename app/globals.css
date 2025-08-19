@@ -1,0 +1,78 @@
+/* app/skills.css */
+
+/* Fonts + background */
+body {
+  background: linear-gradient(135deg, #f9f9ff, #f0f5ff);
+  font-family: 'Inter', sans-serif;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 0;
+}
+
+/* Headings */
+h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: center;
+  background: linear-gradient(90deg, #7f5af0, #2cb67d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1rem;
+}
+
+/* Labels */
+label {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+label::before {
+  content: "✨ ";
+}
+
+/* Dropdowns */
+select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 12px;
+  border: 2px solid #ddd;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+select:hover {
+  border-color: #7f5af0;
+  box-shadow: 0 0 6px rgba(127, 90, 240, 0.3);
+}
+
+/* Skills grid */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 1rem;
+}
+
+/* Skill tiles */
+.skill-card {
+  padding: 14px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff, #f0f5ff);
+  border: 2px solid #e6e6e6;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.skill-card:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(127, 90, 240, 0.25);
+  border-color: #7f5af0;
+}
