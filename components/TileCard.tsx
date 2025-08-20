@@ -2,18 +2,9 @@
 
 import React, { useMemo } from "react";
 
-// Strong, vivid palette only
 const COLORS = [
-  "#2563EB", // Strong Blue
-  "#16A34A", // Strong Green
-  "#EA580C", // Strong Orange
-  "#DC2626", // Strong Red
-  "#7C3AED", // Strong Violet
-  "#DB2777", // Strong Pink
-  "#0D9488", // Strong Teal
-  "#4338CA", // Strong Indigo
-  "#65A30D", // Strong Lime
-  "#BE123C", // Strong Rose
+  "#2563EB", "#16A34A", "#EA580C", "#DC2626", "#7C3AED",
+  "#DB2777", "#0D9488", "#4338CA", "#65A30D", "#BE123C",
 ];
 
 export default function TileCard({
@@ -39,7 +30,6 @@ export default function TileCard({
       onClick={onClick}
     >
       <span className="skill-text">{skill}</span>
-
       {detail && <p className="skill-detail">{detail}</p>}
     </div>
   );

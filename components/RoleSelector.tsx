@@ -80,7 +80,7 @@ export default function RoleSelector() {
 
     try {
       const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
-      const data = await res.json();
+      const data = await res.json(); // ✅ FIX: parse as JSON, not HTML
       setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
     } catch (err) {
       console.error("Failed to fetch detail:", err);
