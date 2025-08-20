@@ -16,7 +16,7 @@ export default function RoleSelector() {
   const [query, setQuery] = useState<string>("");
   const [searchMode, setSearchMode] = useState<"domain" | "general">("domain");
   const [expanded, setExpanded] = useState<boolean>(false);
-  const [openTile, setOpenTile] = useState<string | null>(null); // ✅ Track open/closed tile
+  const [openTile, setOpenTile] = useState<string | null>(null);
 
   useEffect(() => {
     const savedCache = localStorage.getItem("skillsCache");
@@ -77,10 +77,9 @@ export default function RoleSelector() {
   };
 
   const handleTileClick = async (skill: string) => {
-    // Toggle open/close
     setOpenTile(openTile === skill ? null : skill);
 
-    if (details[skill]) return; // already loaded
+    if (details[skill]) return;
 
     try {
       const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
@@ -208,25 +207,29 @@ export default function RoleSelector() {
               key={idx}
               skill={skill}
               detail={details[skill]}
-              isOpen={openTile === skill}        // ✅ control open state
-              onClick={() => handleTileClick(skill)} // ✅ toggle handler
+              isOpen={openTile === skill}
+              onClick={() => handleTileClick(skill)}
             />
           ))}
         </div>
 
-        {skills.length > 3 && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="expand-btn"
-          >
-            {expanded ? "Collapse" : "Expand"}
-          </button>
-        )}
-
         {skills.length > 0 && (
-          <button onClick={handleClear} className="clear-btn">
-            Clear
-          </button>
+          <div className="flex justify-center gap-4 mt-4">
+            {skills.length > 3 && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="expand-btn"
+              >
+                {expanded ? "Collapse" : "Expand"}
+              </button>
+            )}
+            <button
+              onClick={handleClear}
+              className="clear-btn bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition"
+            >
+              Clear
+            </button>
+          </div>
         )}
       </div>
     </div>

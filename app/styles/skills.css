@@ -264,3 +264,25 @@ button.expand-btn {
 button.expand-btn:hover {
   background: #2563eb;
 }
+
+/* === Clear Button === */
+button.clear-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 9999px;
+  border: none;
+  background: #ef4444; /* red-500 */
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+button.clear-btn:hover {
+  background: #dc2626; /* red-600 */
+}
+button.clear-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
