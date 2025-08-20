@@ -14,6 +14,7 @@ export async function GET(req: Request) {
   const skill = searchParams.get("skill");
 
   if (!skill) {
+    console.error("❌ Missing skill parameter");
     return NextResponse.json({ error: "Missing skill" }, { status: 400 });
   }
 
@@ -22,25 +23,28 @@ export async function GET(req: Request) {
 Explain what it is, why it matters in professional roles, and give 1–2 real-world examples.
 Return plain text only, no formatting.`;
 
-    console.log("➡️ Detail prompt:", prompt);
+    console.log("➡️ Sending prompt to OpenAI:", prompt);
 
     const response = await client.chat.completions.create({
-      model: "gpt-4o-mini", // try mini first
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
     });
 
-    console.log("✅ OpenAI raw response:", JSON.stringify(response, null, 2));
+    console.log("✅ OpenAI full response:", JSON.stringify(response, null, 2));
 
     const content =
-      response.choices?.[0]?.message?.content?.trim() ||
-      "No explanation returned.";
+      response.choices?.[0]?.message?.content?.trim() || "⚠️ No explanation returned";
+
+    console.log("📦 Extracted content:", content);
 
     return NextResponse.json({ skill, detail: content });
   } catch (error: any) {
-    console.error("❌ Error fetching skill detail:", error?.message || error);
+    console.error("❌ OpenAI API call failed");
+    console.error("🔍 Error details:", error?.response?.data || error?.message || error);
+
     return NextResponse.json(
-      { error: "Failed to fetch skill detail from OpenAI" },
+      { error: "Failed to fetch skill detail from OpenAI", details: error?.message || "Unknown error" },
       { status: 500 }
     );
   }
