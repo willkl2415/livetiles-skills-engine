@@ -16,6 +16,7 @@ export default function RoleSelector() {
   const [query, setQuery] = useState<string>("");
   const [searchMode, setSearchMode] = useState<"domain" | "general">("domain");
   const [expanded, setExpanded] = useState<boolean>(false);
+  const [openTile, setOpenTile] = useState<string | null>(null); // ✅ Track open/closed tile
 
   useEffect(() => {
     const savedCache = localStorage.getItem("skillsCache");
@@ -44,6 +45,7 @@ export default function RoleSelector() {
         setSkills(data.skills);
         if (key) setCache((prev) => ({ ...prev, [key]: data.skills }));
         setExpanded(false);
+        setOpenTile(null);
         return;
       }
     } catch {
@@ -53,6 +55,7 @@ export default function RoleSelector() {
     if (key && cache[key]) {
       setSkills(cache[key]);
       setExpanded(false);
+      setOpenTile(null);
       return;
     }
 
@@ -66,27 +69,42 @@ export default function RoleSelector() {
       setSkills(roleSkills);
       setCache((prev) => ({ ...prev, [selectedRole]: roleSkills }));
       setExpanded(false);
+      setOpenTile(null);
       return;
     }
 
     setSkills(["❌ No skills found"]);
   };
 
-  const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
-  const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
-
   const handleTileClick = async (skill: string) => {
+    // Toggle open/close
+    setOpenTile(openTile === skill ? null : skill);
+
     if (details[skill]) return; // already loaded
 
     try {
       const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
-      const data = await res.json(); // ✅ FIX: parse as JSON, not HTML
+      const data = await res.json();
       setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
     } catch (err) {
       console.error("Failed to fetch detail:", err);
       setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
     }
   };
+
+  const handleClear = () => {
+    setIndustry("");
+    setFunc("");
+    setRole("");
+    setQuery("");
+    setSkills([]);
+    setDetails({});
+    setExpanded(false);
+    setOpenTile(null);
+  };
+
+  const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
+  const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
 
   return (
     <div className="phone-frame">
@@ -190,7 +208,8 @@ export default function RoleSelector() {
               key={idx}
               skill={skill}
               detail={details[skill]}
-              onClick={() => handleTileClick(skill)}
+              isOpen={openTile === skill}        // ✅ control open state
+              onClick={() => handleTileClick(skill)} // ✅ toggle handler
             />
           ))}
         </div>
@@ -201,6 +220,12 @@ export default function RoleSelector() {
             className="expand-btn"
           >
             {expanded ? "Collapse" : "Expand"}
+          </button>
+        )}
+
+        {skills.length > 0 && (
+          <button onClick={handleClear} className="clear-btn">
+            Clear
           </button>
         )}
       </div>
