@@ -1,5 +1,6 @@
 // app/api/getSkills/route.ts
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";   // ✅ Force Node runtime
 
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
