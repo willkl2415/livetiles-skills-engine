@@ -18,9 +18,11 @@ const COLORS = [
 
 export default function TileCard({
   skill,
+  detail,
   onClick,
 }: {
   skill: string;
+  detail?: string;
   onClick?: () => void;
 }) {
   const bgColor = useMemo(() => {
@@ -37,6 +39,20 @@ export default function TileCard({
       onClick={onClick}
     >
       <span className="skill-text">{skill}</span>
+
+      {detail && (
+        <p
+          style={{
+            fontSize: "0.9rem",
+            lineHeight: "1.5",
+            color: "#f9fafb",
+            marginTop: "0.5rem",
+            textAlign: "left",
+          }}
+        >
+          {detail}
+        </p>
+      )}
     </div>
   );
 }

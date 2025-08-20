@@ -11,6 +11,7 @@ export default function RoleSelector() {
   const [func, setFunc] = useState<string>("");
   const [role, setRole] = useState<string>("");
   const [skills, setSkills] = useState<string[]>([]);
+  const [details, setDetails] = useState<Record<string, string>>({});
   const [cache, setCache] = useState<Record<string, string[]>>({});
   const [query, setQuery] = useState<string>("");
   const [searchMode, setSearchMode] = useState<"domain" | "general">("domain");
@@ -74,9 +75,20 @@ export default function RoleSelector() {
   const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
   const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
 
-  const handleTileClick = (skill: string) => {
-    const skillUrl = `/api/getSkillDetail?skill=${encodeURIComponent(skill)}`;
-    window.open(skillUrl, "_blank", "noopener,noreferrer");
+  const handleTileClick = async (skill: string) => {
+    if (details[skill]) return; // already loaded
+
+    try {
+      const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
+      const text = await res.text();
+      // extract <p> content from HTML response
+      const match = text.match(/<p>(.*?)<\/p>/s);
+      const detail = match ? match[1] : "No detail available.";
+      setDetails((prev) => ({ ...prev, [skill]: detail }));
+    } catch (err) {
+      console.error("Failed to fetch detail:", err);
+      setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
+    }
   };
 
   return (
@@ -180,6 +192,7 @@ export default function RoleSelector() {
             <TileCard
               key={idx}
               skill={skill}
+              detail={details[skill]}
               onClick={() => handleTileClick(skill)}
             />
           ))}
