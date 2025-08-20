@@ -80,11 +80,8 @@ export default function RoleSelector() {
 
     try {
       const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
-      const text = await res.text();
-      // extract <p> content from HTML response
-      const match = text.match(/<p>(.*?)<\/p>/s);
-      const detail = match ? match[1] : "No detail available.";
-      setDetails((prev) => ({ ...prev, [skill]: detail }));
+      const data = await res.json();
+      setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
     } catch (err) {
       console.error("Failed to fetch detail:", err);
       setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
