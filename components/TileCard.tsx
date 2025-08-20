@@ -10,7 +10,7 @@ const COLORS = [
 interface TileCardProps {
   skill: string;
   detail?: string;
-  isOpen: boolean;          // ✅ new prop
+  isOpen: boolean;
   onClick?: () => void;
 }
 
@@ -31,8 +31,8 @@ export default function TileCard({ skill, detail, isOpen, onClick }: TileCardPro
       onClick={onClick}
     >
       <span className="skill-text">{skill}</span>
-      
-      {/* ✅ Only show detail if the tile is open */}
+
+      {/* 🔑 Only show detail if open */}
       {isOpen && detail && (
         <p className="skill-detail mt-2 text-sm">{detail}</p>
       )}
