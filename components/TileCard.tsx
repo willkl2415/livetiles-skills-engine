@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 
-// Stronger, vivid palette only
+// Strong, vivid palette only
 const COLORS = [
   "#2563EB", // Strong Blue
   "#16A34A", // Strong Green
@@ -40,19 +40,7 @@ export default function TileCard({
     >
       <span className="skill-text">{skill}</span>
 
-      {detail && (
-        <p
-          style={{
-            fontSize: "0.9rem",
-            lineHeight: "1.5",
-            color: "#f9fafb",
-            marginTop: "0.5rem",
-            textAlign: "left",
-          }}
-        >
-          {detail}
-        </p>
-      )}
+      {detail && <p className="skill-detail">{detail}</p>}
     </div>
   );
 }
