@@ -42,17 +42,8 @@ Return plain text only, no formatting.`;
 
     const content = response.choices[0].message.content?.trim() || "";
 
-    return new NextResponse(
-      `<html>
-        <head><title>${skill} - Skill Detail</title></head>
-        <body style="font-family:sans-serif;max-width:600px;margin:2rem auto;line-height:1.6;">
-          <h1>${skill}</h1>
-          <p>${content}</p>
-          <a href="/" style="color:blue;text-decoration:none;font-weight:600;">⬅ Back to LiveTiles</a>
-        </body>
-      </html>`,
-      { headers: { "Content-Type": "text/html" } }
-    );
+    // ✅ Return JSON instead of HTML
+    return NextResponse.json({ skill, detail: content });
   } catch (error) {
     console.error("❌ Error fetching skill detail:", error);
     return NextResponse.json(
