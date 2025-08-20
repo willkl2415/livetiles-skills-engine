@@ -24,28 +24,21 @@ Return plain text only, no formatting.`;
 
     console.log("➡️ Detail prompt:", prompt);
 
-    let response;
-    try {
-      response = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.3,
-      });
-    } catch (err) {
-      console.warn("⚠️ gpt-4o-mini failed, retrying with gpt-4o:", err);
-      response = await client.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.3,
-      });
-    }
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini", // try mini first
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+    });
 
-    const content = response.choices[0].message.content?.trim() || "";
+    console.log("✅ OpenAI raw response:", JSON.stringify(response, null, 2));
 
-    // ✅ Return JSON instead of HTML
+    const content =
+      response.choices?.[0]?.message?.content?.trim() ||
+      "No explanation returned.";
+
     return NextResponse.json({ skill, detail: content });
-  } catch (error) {
-    console.error("❌ Error fetching skill detail:", error);
+  } catch (error: any) {
+    console.error("❌ Error fetching skill detail:", error?.message || error);
     return NextResponse.json(
       { error: "Failed to fetch skill detail from OpenAI" },
       { status: 500 }
