@@ -1,8 +1,9 @@
 // app/api/getSkillDetail/route.ts
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-
-export const runtime = "nodejs";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
 
   try {
     const prompt = `Provide a concise explanation (max 120 words) of the skill "${skill}".
-Explain what it is, why it matters in professional roles, and give 1--2 real-world examples.
+Explain what it is, why it matters in professional roles, and give 1–2 real-world examples.
 Return plain text only, no formatting.`;
 
     console.log("➡️ Detail prompt:", prompt);
@@ -48,13 +49,6 @@ Return plain text only, no formatting.`;
           <h1>${skill}</h1>
           <p>${content}</p>
           <a href="/" style="color:blue;text-decoration:none;font-weight:600;">⬅ Back to LiveTiles</a>
-          <script>
-            // ensure reload always works
-            document.querySelector('a').addEventListener('click', function(e) {
-              e.preventDefault();
-              window.location.href = "/";
-            });
-          </script>
         </body>
       </html>`,
       { headers: { "Content-Type": "text/html" } }
