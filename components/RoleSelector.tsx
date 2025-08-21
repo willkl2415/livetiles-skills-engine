@@ -82,20 +82,12 @@ export default function RoleSelector() {
     if (details[skill]) return;
 
     try {
-      const res = await fetch(
-        `/api/getSkillDetail?skill=${encodeURIComponent(skill)}`
-      );
+      const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
       const data = await res.json();
-      setDetails((prev) => ({
-        ...prev,
-        [skill]: data.detail || "No detail available.",
-      }));
+      setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
     } catch (err) {
       console.error("Failed to fetch detail:", err);
-      setDetails((prev) => ({
-        ...prev,
-        [skill]: "❌ Failed to load detail",
-      }));
+      setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
     }
   };
 
@@ -185,9 +177,7 @@ export default function RoleSelector() {
           </div>
           <div
             onClick={() => setSearchMode("general")}
-            className={`toggle-pill ${
-              searchMode === "general" ? "active" : ""
-            }`}
+            className={`toggle-pill ${searchMode === "general" ? "active" : ""}`}
           >
             General <span className="toggle-indicator green"></span>
           </div>
@@ -224,18 +214,23 @@ export default function RoleSelector() {
         </div>
 
         {skills.length > 0 && (
-          <div className="flex justify-center gap-6 mt-4">
-            {skills.length > 3 && (
+          <div className="flex justify-center mt-4">
+            <div className="flex flex-row gap-6">   {/* ✅ wider spacing */}
+              {skills.length > 3 && (
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="expand-btn"
+                >
+                  {expanded ? "Collapse" : "Expand"}
+                </button>
+              )}
               <button
-                onClick={() => setExpanded(!expanded)}
-                className="expand-btn"
+                onClick={handleClear}
+                className="clear-btn"
               >
-                {expanded ? "Collapse" : "Expand"}
+                Clear
               </button>
-            )}
-            <button onClick={handleClear} className="clear-btn">
-              Clear
-            </button>
+            </div>
           </div>
         )}
       </div>
