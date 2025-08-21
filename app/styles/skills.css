@@ -142,7 +142,7 @@ select:disabled {
 /* === Expand & Clear Buttons === */
 .expand-btn,
 .clear-btn {
-  padding: 0.5rem 1.25rem;
+  padding: 0.5rem 1.75rem;
   border-radius: 9999px;
   font-size: 0.9rem;
   font-weight: 600;
