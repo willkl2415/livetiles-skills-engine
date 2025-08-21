@@ -79,9 +79,6 @@ select:disabled {
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .toggle-pill.active {
@@ -151,13 +148,4 @@ select:disabled {
 .clear-btn {
   background: #ef4444;
   color: white;
-}
-
-/* ✅ Proper spacing between Expand and Clear */
-.button-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1.25rem;   /* controls button spacing */
-  margin-top: 1rem;
 }
