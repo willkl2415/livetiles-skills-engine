@@ -19,7 +19,7 @@ Object.keys(SKILLS as any).forEach((industry: string) => {
       (SKILLS as any)[industry][func][role].forEach((s: string, idx: number) => {
         allSkills.push({
           id: `${industry}-${func}-${role}-${idx}`,
-          title: s
+          title: s,
         });
       });
     });
@@ -42,10 +42,11 @@ export default function SwipeDeck() {
           <SwiperSlide key={skill.id}>
             <TileCard
               skill={skill.title}
-              isOpen={openTile === skill.id}        // ✅ required prop
+              detail={""} // ✅ ensures prop completeness (detail optional, blank here)
+              isOpen={openTile === skill.id} 
               onClick={() =>
                 setOpenTile(openTile === skill.id ? null : skill.id)
-              }                                   // ✅ toggle support
+              }
             />
           </SwiperSlide>
         ))}
