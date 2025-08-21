@@ -1,239 +1,159 @@
-"use client";
+/* === Global Reset + Font === */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f3f4f6;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+}
 
-import { useState, useEffect } from "react";
-import { ROLES } from "../app/data/roles.js";
-import { SKILLS } from "../app/data/skills";
-import "../app/styles/skills.css";
-import TileCard from "./TileCard";
+/* === Phone Frame === */
+.phone-frame {
+  width: 390px;
+  height: 844px;
+  margin: 1rem auto;
+  padding: 1.5rem 1rem;
+  border: 8px solid #1f2937;
+  border-radius: 2rem;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-direction: column;
+  overflow-y: auto;
+}
 
-export default function RoleSelector() {
-  const [industry, setIndustry] = useState<string>("");
-  const [func, setFunc] = useState<string>("");
-  const [role, setRole] = useState<string>("");
-  const [skills, setSkills] = useState<string[]>([]);
-  const [details, setDetails] = useState<Record<string, string>>({});
-  const [cache, setCache] = useState<Record<string, string[]>>({});
-  const [query, setQuery] = useState<string>("");
-  const [searchMode, setSearchMode] = useState<"domain" | "general">("domain");
-  const [expanded, setExpanded] = useState<boolean>(false);
-  const [openTile, setOpenTile] = useState<string | null>(null);
+/* === Title & Subtitle === */
+.app-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 0.25rem;
+  background: linear-gradient(90deg, #9333ea, #3b82f6, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
-  useEffect(() => {
-    const savedCache = localStorage.getItem("skillsCache");
-    if (savedCache) setCache(JSON.parse(savedCache));
-  }, []);
+.subtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  display: block;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
 
-  useEffect(() => {
-    localStorage.setItem("skillsCache", JSON.stringify(cache));
-  }, [cache]);
+/* === Labels === */
+.dropdown-label {
+  font-size: 0.85rem;
+  margin: 0.75rem 0 0.25rem;
+  font-weight: 600;
+  color: #374151;
+}
 
-  const fetchSkills = async (selectedRole?: string, searchQuery?: string) => {
-    let key = "";
-    if (searchQuery && selectedRole) key = `${selectedRole}::${searchQuery}`;
-    else if (searchQuery) key = `general::${searchQuery}`;
-    else if (selectedRole) key = selectedRole;
+/* === Dropdowns === */
+select {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.5rem;
+  outline: none;
+}
 
-    try {
-      let url = "/api/getSkills?";
-      if (selectedRole) url += `role=${encodeURIComponent(selectedRole)}&`;
-      if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}`;
+select:disabled {
+  background: #f9fafb;
+  cursor: not-allowed;
+}
 
-      const res = await fetch(url);
-      const data = await res.json();
+/* === Toggle Pills === */
+.toggle-pill {
+  padding: 0.4rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
 
-      if (data.skills && data.skills.length > 0) {
-        setSkills(data.skills);
-        if (key) setCache((prev) => ({ ...prev, [key]: data.skills }));
-        setExpanded(false);
-        setOpenTile(null);
-        return;
-      }
-    } catch {
-      console.warn("API fetch failed, checking cache/local");
-    }
+.toggle-pill.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
 
-    if (key && cache[key]) {
-      setSkills(cache[key]);
-      setExpanded(false);
-      setOpenTile(null);
-      return;
-    }
+.toggle-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 6px;
+}
 
-    if (
-      selectedRole &&
-      industry &&
-      func &&
-      (SKILLS as any)[industry]?.[func]?.[selectedRole]
-    ) {
-      const roleSkills = (SKILLS as any)[industry][func][selectedRole];
-      setSkills(roleSkills);
-      setCache((prev) => ({ ...prev, [selectedRole]: roleSkills }));
-      setExpanded(false);
-      setOpenTile(null);
-      return;
-    }
+.toggle-indicator.red {
+  background: red;
+}
 
-    setSkills(["❌ No skills found"]);
-  };
+.toggle-indicator.green {
+  background: green;
+}
 
-  const handleTileClick = async (skill: string) => {
-    setOpenTile(openTile === skill ? null : skill);
+/* === Search Button === */
+.search-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background 0.2s;
+}
 
-    if (details[skill]) return;
+.search-btn:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
 
-    try {
-      const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
-      const data = await res.json();
-      setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
-    } catch (err) {
-      console.error("Failed to fetch detail:", err);
-      setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
-    }
-  };
+/* === Skills Grid === */
+.skills-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
 
-  const handleClear = () => {
-    setIndustry("");
-    setFunc("");
-    setRole("");
-    setQuery("");
-    setSkills([]);
-    setDetails({});
-    setExpanded(false);
-    setOpenTile(null);
-  };
+/* === Expand & Clear Buttons === */
+.expand-btn,
+.clear-btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
 
-  const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
-  const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
+.expand-btn {
+  background: #2563eb;
+  color: white;
+}
 
-  return (
-    <div className="phone-frame">
-      <div className="role-selector">
-        <h1 className="app-title">
-          Welcome to LiveTiles™ <br />
-          <span className="subtitle">The Ultimate Skills Engine 🚀</span>
-        </h1>
+.clear-btn {
+  background: #ef4444;
+  color: white;
+}
 
-        <p className="dropdown-label">🌐 Select Industry</p>
-        <select
-          value={industry}
-          onChange={(e) => {
-            setIndustry(e.target.value);
-            setFunc("");
-            setRole("");
-            setSkills([]);
-          }}
-        >
-          <option value="">Select Industry</option>
-          {Object.keys(ROLES).map((ind) => (
-            <option key={ind} value={ind}>
-              {ind}
-            </option>
-          ))}
-        </select>
-
-        <p className="dropdown-label">⚡ Select Function</p>
-        <select
-          value={func}
-          onChange={(e) => {
-            setFunc(e.target.value);
-            setRole("");
-            setSkills([]);
-          }}
-          disabled={!industry}
-        >
-          <option value="">Select Function</option>
-          {functions.map((f: string) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
-          ))}
-        </select>
-
-        <p className="dropdown-label">🎯 Select Role</p>
-        <select
-          value={role}
-          onChange={(e) => {
-            const selectedRole = e.target.value;
-            setRole(selectedRole);
-            fetchSkills(selectedRole);
-          }}
-          disabled={!func}
-        >
-          <option value="">Select Role</option>
-          {roles.map((r: string) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-
-        <p className="dropdown-label">🔍 Search Skills</p>
-        <div className="flex items-center gap-4 mb-4 justify-center">
-          <div
-            onClick={() => setSearchMode("domain")}
-            className={`toggle-pill ${searchMode === "domain" ? "active" : ""}`}
-          >
-            Domain <span className="toggle-indicator red"></span>
-          </div>
-          <div
-            onClick={() => setSearchMode("general")}
-            className={`toggle-pill ${searchMode === "general" ? "active" : ""}`}
-          >
-            General <span className="toggle-indicator green"></span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 mb-6 justify-center">
-          <input
-            type="text"
-            value={query}
-            placeholder="Type your question here"
-            onChange={(e) => setQuery(e.target.value)}
-          />
-          <button
-            onClick={() =>
-              fetchSkills(searchMode === "domain" ? role : undefined, query)
-            }
-            disabled={!query}
-            className="search-btn"
-          >
-            Search
-          </button>
-        </div>
-
-        <div className="skills-grid">
-          {(expanded ? skills : skills.slice(0, 3)).map((skill, idx) => (
-            <TileCard
-              key={idx}
-              skill={skill}
-              detail={details[skill]}
-              isOpen={openTile === skill}
-              onClick={() => handleTileClick(skill)}
-            />
-          ))}
-        </div>
-
-        {skills.length > 0 && (
-          <div className="flex justify-center mt-4">
-            <div className="flex gap-6">   {/* ✅ increased gap */}
-              {skills.length > 3 && (
-                <button
-                  onClick={() => setExpanded(!expanded)}
-                  className="expand-btn"
-                >
-                  {expanded ? "Collapse" : "Expand"}
-                </button>
-              )}
-              <button
-                onClick={handleClear}
-                className="clear-btn"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+/* ✅ Ensure proper spacing between Expand and Clear buttons */
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;   /* 🔑 spacing between buttons */
+  margin-top: 1rem;
 }
