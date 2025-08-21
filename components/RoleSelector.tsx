@@ -214,23 +214,21 @@ export default function RoleSelector() {
         </div>
 
         {skills.length > 0 && (
-          <div className="flex justify-center mt-4">
-            <div className="flex flex-row gap-6">   {/* ✅ wider spacing */}
-              {skills.length > 3 && (
-                <button
-                  onClick={() => setExpanded(!expanded)}
-                  className="expand-btn"
-                >
-                  {expanded ? "Collapse" : "Expand"}
-                </button>
-              )}
+          <div className="button-row">   {/* ✅ clean separation wrapper */}
+            {skills.length > 3 && (
               <button
-                onClick={handleClear}
-                className="clear-btn"
+                onClick={() => setExpanded(!expanded)}
+                className="expand-btn"
               >
-                Clear
+                {expanded ? "Collapse" : "Expand"}
               </button>
-            </div>
+            )}
+            <button
+              onClick={handleClear}
+              className="clear-btn"
+            >
+              Clear
+            </button>
           </div>
         )}
       </div>

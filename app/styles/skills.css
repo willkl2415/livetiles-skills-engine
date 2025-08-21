@@ -34,7 +34,8 @@ body {
   text-align: center;
   margin-bottom: 0.25rem;
   background: linear-gradient(90deg, #9333ea, #3b82f6, #10b981);
-  -webkit-background-clip: text;
+  background-clip: text;              /* ✅ standard property */
+  -webkit-background-clip: text;      /* ✅ vendor prefix */
   -webkit-text-fill-color: transparent;
 }
 
@@ -148,4 +149,12 @@ select:disabled {
 .clear-btn {
   background: #ef4444;
   color: white;
+}
+
+/* ✅ Ensure spacing between Expand & Clear buttons */
+.button-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;   /* spacing between buttons */
+  margin-top: 1rem;
 }
