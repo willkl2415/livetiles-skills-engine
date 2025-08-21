@@ -71,8 +71,18 @@ select:disabled {
   cursor: not-allowed;
 }
 
-/* === Toggle Pills === */
+/* === Toggle Pills (Fix) === */
+.toggle-container {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;           /* spacing between Domain / General */
+  margin-bottom: 1rem;
+}
+
 .toggle-pill {
+  flex: 0 0 auto;      /* ✅ prevent full-width stretching */
+  min-width: 100px;    /* ✅ consistent pill size */
+  text-align: center;
   padding: 0.4rem 0.8rem;
   border-radius: 9999px;
   border: 1px solid #d1d5db;
