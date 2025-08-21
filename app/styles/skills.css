@@ -71,7 +71,7 @@ select:disabled {
   cursor: not-allowed;
 }
 
-/* === Toggle Pills (Fix) === */
+/* === Toggle Pills (Fixed horizontal layout) === */
 .toggle-container {
   display: flex;
   justify-content: center;
@@ -80,9 +80,6 @@ select:disabled {
 }
 
 .toggle-pill {
-  flex: 0 0 auto;      /* ✅ prevent full-width stretching */
-  min-width: 100px;    /* ✅ consistent pill size */
-  text-align: center;
   padding: 0.4rem 0.8rem;
   border-radius: 9999px;
   border: 1px solid #d1d5db;
@@ -90,6 +87,8 @@ select:disabled {
   font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.2s;
+  text-align: center;
+  min-width: 90px;     /* ✅ keeps size consistent but not oversized */
 }
 
 .toggle-pill.active {
@@ -165,6 +164,6 @@ select:disabled {
 .button-row {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;   /* spacing between buttons */
+  gap: 1.5rem;
   margin-top: 1rem;
 }
