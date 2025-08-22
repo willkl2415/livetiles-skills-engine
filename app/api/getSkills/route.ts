@@ -8,44 +8,43 @@ import OpenAI from "openai";
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Intent detection
-function detectIntent(
-  query: string
-): "procedural" | "definition" | "list" | "comparative" | "reason" | "general" {
+function detectIntent(query: string): "procedural" | "definition" | "list" | "comparative" | "reason" | "general" {
   const q = query.toLowerCase();
 
-  if (
-    q.startsWith("how do i") ||
-    q.startsWith("how to") ||
-    q.includes("steps") ||
-    q.includes("process")
-  )
+  if (q.startsWith("how do i") || q.startsWith("how to") || q.includes("steps") || q.includes("process"))
     return "procedural";
-  if (
-    q.startsWith("what is") ||
-    q.startsWith("define") ||
-    q.startsWith("explain") ||
-    q.includes("overview")
-  )
+  if (q.startsWith("what is") || q.startsWith("define") || q.startsWith("explain") || q.includes("overview"))
     return "definition";
-  if (
-    q.startsWith("what are") ||
-    q.includes("types of") ||
-    q.includes("examples of") ||
-    q.includes("key elements") ||
-    q.includes("main factors")
-  )
+  if (q.startsWith("what are") || q.includes("types of") || q.includes("examples of") || q.includes("key elements") || q.includes("main factors"))
     return "list";
-  if (
-    q.includes("difference between") ||
-    q.includes("compare") ||
-    q.includes("vs") ||
-    q.includes("pros and cons")
-  )
+  if (q.includes("difference between") || q.includes("compare") || q.includes("vs") || q.includes("pros and cons"))
     return "comparative";
   if (q.startsWith("why") || q.includes("purpose of") || q.includes("importance"))
     return "reason";
 
   return "general";
+}
+
+async function callOpenAI(prompt: string) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000); // ⏱ enforce 3s timeout
+  try {
+    return await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2,
+      signal: controller.signal,
+    });
+  } catch {
+    // fallback to heavier model only if mini fails
+    return await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.2,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function GET(req: Request) {
@@ -54,17 +53,22 @@ export async function GET(req: Request) {
   const query = searchParams.get("query");
   const industry = searchParams.get("industry") || "";
   const func = searchParams.get("func") || "";
-  const searchMode = searchParams.get("mode") || "domain";
+  let searchMode = (searchParams.get("mode") as "domain" | "general") || "domain";
 
   if (!role && !query) {
-    return NextResponse.json(
-      { error: "Missing role or query" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Missing role or query" }, { status: 400 });
   }
 
   try {
     let prompt = "";
+
+    // auto-route: if General but query is clearly procedural/definition/etc. → force domain
+    if (query && searchMode === "general") {
+      const intent = detectIntent(query);
+      if (intent !== "general") {
+        searchMode = "domain";
+      }
+    }
 
     // === GENERAL MODE ===
     if (query && searchMode === "general") {
@@ -76,24 +80,10 @@ Return pure JSON array, no explanations.`;
     // === DOMAIN MODE ===
     else if (searchMode === "domain") {
       if (query) {
-        const irrelevantKeywords = [
-          "boil an egg",
-          "make a cup of tea",
-          "iron a shirt",
-          "cook",
-          "recipe",
-          "laundry",
-          "clean",
-          "household",
-          "domestic",
-        ];
+        const irrelevantKeywords = ["boil an egg", "make a cup of tea", "iron a shirt", "cook", "recipe", "laundry", "clean", "household", "domestic"];
         const qLower = query.toLowerCase();
-        if (irrelevantKeywords.some((p) => qLower.includes(p))) {
-          return NextResponse.json({
-            skills: [
-              "⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase.",
-            ],
-          });
+        if (irrelevantKeywords.some(p => qLower.includes(p))) {
+          return NextResponse.json({ skills: ["⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."] });
         }
       }
 
@@ -125,27 +115,13 @@ Pure JSON array, no explanations.`;
       }
     }
 
-    // === FALLBACK ===
+    // fallback
     else if (query) {
       prompt = `Generate ONLY a valid JSON array of 5-10 professional skills for "${query}". Professional only.`;
     }
 
     // OpenAI call
-    let response;
-    try {
-      response = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2,
-      });
-    } catch {
-      response = await client.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2,
-      });
-    }
-
+    const response = await callOpenAI(prompt);
     let content = response.choices[0].message.content?.trim() || "[]";
     content = content.replace(/```json/gi, "").replace(/```/g, "").trim();
 
@@ -153,44 +129,21 @@ Pure JSON array, no explanations.`;
     try {
       const parsed = JSON.parse(content);
       if (Array.isArray(parsed)) {
-        skills = parsed;
-      } else if (parsed && typeof parsed === "object" && parsed.steps) {
-        if (parsed.title) skills.push(`📌 ${parsed.title}`);
-        skills = skills.concat(parsed.steps);
-        if (parsed.pro_tip) skills.push(`💡 Pro Tip: ${parsed.pro_tip}`);
+        skills = parsed as string[];
+      } else if (parsed && typeof parsed === "object" && "steps" in parsed) {
+        if ((parsed as any).title) skills.push(`📌 ${(parsed as any).title}`);
+        skills = skills.concat((parsed as any).steps);
+        if ((parsed as any).pro_tip) skills.push(`💡 Pro Tip: ${(parsed as any).pro_tip}`);
       }
     } catch {
       skills = content
         .split("\n")
-        .map((s: string) =>
-          s.replace(/^\d+[\.\)]\s*/, "").trim()
-        )
+        .map((s: string) => s.replace(/^\d+[\.\)]\s*/, "").trim())
         .filter((s: string) => s.length > 0);
-    }
-
-    // ✅ Extra: Only domain mode enforces context check
-    if (query && role && searchMode === "domain") {
-      const contextWords = [role, industry, func]
-        .filter(Boolean)
-        .map((s) => s.toLowerCase());
-      const joinedResponse = skills.join(" ").toLowerCase();
-      const relevant = contextWords.some((word) =>
-        joinedResponse.includes(word)
-      );
-      if (!relevant) {
-        return NextResponse.json({
-          skills: [
-            "⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase.",
-          ],
-        });
-      }
     }
 
     return NextResponse.json({ skills });
   } catch {
-    return NextResponse.json(
-      { error: "Failed to fetch skills from OpenAI" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch skills from OpenAI" }, { status: 500 });
   }
 }

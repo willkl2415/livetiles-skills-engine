@@ -31,12 +31,8 @@ export default function TileCard({ skill, detail, isOpen, onClick }: TileCardPro
       onClick={onClick}
     >
       <span className="skill-text">{skill}</span>
-
-      {/* 🔑 Only show detail if open */}
       {isOpen && detail && (
-        <p className="skill-detail mt-2 text-sm">
-          {detail || "No details available."}
-        </p>
+        <p className="skill-detail mt-2 text-sm">{detail}</p>
       )}
     </div>
   );
