@@ -18,8 +18,8 @@ export default function RoleSelector() {
   const [expanded, setExpanded] = useState<boolean>(false);
   const [openTile, setOpenTile] = useState<string | null>(null);
   const [notice, setNotice] = useState<string>("");
+  const [resetKey, setResetKey] = useState<number>(0); // ✅ force re-render dropdowns
 
-  // ✅ Load/save cache
   useEffect(() => {
     const savedCache = localStorage.getItem("skillsCache");
     if (savedCache) setCache(JSON.parse(savedCache));
@@ -56,29 +56,17 @@ export default function RoleSelector() {
         return;
       }
     } catch {
-      console.warn("❌ API fetch failed, trying cache/local");
+      console.warn("❌ API fetch failed");
     }
 
-    // Fallback: cache
     if (key && cache[key]) {
       setSkills(cache[key]);
-      setExpanded(false);
-      setOpenTile(null);
       return;
     }
 
-    // Fallback: local SKILLS object
-    if (
-      selectedRole &&
-      industry &&
-      func &&
-      (SKILLS as any)[industry]?.[func]?.[selectedRole]
-    ) {
+    if (selectedRole && industry && func && (SKILLS as any)[industry]?.[func]?.[selectedRole]) {
       const roleSkills = (SKILLS as any)[industry][func][selectedRole];
       setSkills(roleSkills);
-      setCache((prev) => ({ ...prev, [selectedRole]: roleSkills }));
-      setExpanded(false);
-      setOpenTile(null);
       return;
     }
 
@@ -87,7 +75,6 @@ export default function RoleSelector() {
 
   const handleTileClick = async (skill: string) => {
     setOpenTile(openTile === skill ? null : skill);
-
     if (details[skill]) return;
 
     try {
@@ -97,8 +84,7 @@ export default function RoleSelector() {
         ...prev,
         [skill]: data.detail || "No detail available.",
       }));
-    } catch (err) {
-      console.error("Failed to fetch detail:", err);
+    } catch {
       setDetails((prev) => ({
         ...prev,
         [skill]: "❌ Failed to load detail",
@@ -116,6 +102,7 @@ export default function RoleSelector() {
     setExpanded(false);
     setOpenTile(null);
     setNotice("");
+    setResetKey(prev => prev + 1); // ✅ force dropdown reset
   };
 
   const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
@@ -129,13 +116,12 @@ export default function RoleSelector() {
 
   return (
     <div className="phone-frame">
-      <div className="role-selector">
+      <div className="role-selector" key={resetKey}>
         <h1 className="app-title">
           Welcome to Skills Forge™ <br />
           <span className="subtitle">Knowledge at warp speed 🌌</span>
         </h1>
 
-        {/* Industry */}
         <p className="dropdown-label">🌐 Select Industry</p>
         <select
           value={industry}
@@ -148,13 +134,10 @@ export default function RoleSelector() {
         >
           <option value="">Select Industry</option>
           {Object.keys(ROLES).map((ind) => (
-            <option key={ind} value={ind}>
-              {ind}
-            </option>
+            <option key={ind} value={ind}>{ind}</option>
           ))}
         </select>
 
-        {/* Function */}
         <p className="dropdown-label">⚡ Select Function</p>
         <select
           value={func}
@@ -167,34 +150,26 @@ export default function RoleSelector() {
         >
           <option value="">Select Function</option>
           {functions.map((f: string) => (
-            <option key={f} value={f}>
-              {f}
-            </option>
+            <option key={f} value={f}>{f}</option>
           ))}
         </select>
 
-        {/* Role */}
         <p className="dropdown-label">🎯 Select Role</p>
         <select
           value={role}
           onChange={(e) => {
             const selectedRole = e.target.value;
             setRole(selectedRole);
-            if (searchMode === "domain") {
-              fetchSkills(selectedRole);
-            }
+            if (searchMode === "domain") fetchSkills(selectedRole);
           }}
           disabled={!func}
         >
           <option value="">Select Role</option>
           {roles.map((r: string) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
+            <option key={r} value={r}>{r}</option>
           ))}
         </select>
 
-        {/* Search */}
         <p className="dropdown-label">🔍 Search Skills</p>
         <div className="toggle-container">
           <div
@@ -218,19 +193,13 @@ export default function RoleSelector() {
             placeholder="Type your question here"
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button
-            onClick={handleSearch}
-            disabled={!query}
-            className="search-btn"
-          >
+          <button onClick={handleSearch} disabled={!query} className="search-btn">
             Search
           </button>
         </div>
 
-        {/* Notice */}
         {notice && <div className="notice-banner">⚠️ {notice}</div>}
 
-        {/* Skills Grid */}
         <div className="skills-grid">
           {(expanded ? skills : skills.slice(0, 3)).map((skill, idx) => (
             <TileCard
@@ -243,14 +212,10 @@ export default function RoleSelector() {
           ))}
         </div>
 
-        {/* Expand / Clear */}
         {skills.length > 0 && (
           <div className="button-row">
             {skills.length > 3 && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="expand-btn"
-              >
+              <button onClick={() => setExpanded(!expanded)} className="expand-btn">
                 {expanded ? "Collapse" : "Expand"}
               </button>
             )}
