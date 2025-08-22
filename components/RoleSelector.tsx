@@ -37,11 +37,13 @@ export default function RoleSelector() {
 
     try {
       let url = "/api/getSkills?";
-      if (selectedRole) url += `role=${encodeURIComponent(selectedRole)}&`;
-      if (industry) url += `industry=${encodeURIComponent(industry)}&`;
-      if (func) url += `func=${encodeURIComponent(func)}&`;
+      if (searchMode === "domain") {
+        if (selectedRole) url += `role=${encodeURIComponent(selectedRole)}&`;
+        if (industry) url += `industry=${encodeURIComponent(industry)}&`;
+        if (func) url += `func=${encodeURIComponent(func)}&`;
+      }
       if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}&`;
-      url += `mode=${searchMode}`; // ✅ always include mode
+      url += `mode=${searchMode}`;
 
       const res = await fetch(url);
       const data = await res.json();
@@ -124,7 +126,7 @@ export default function RoleSelector() {
 
   const handleSearch = () => {
     if (!query) return;
-    setNotice(""); // ✅ clear notice
+    setNotice("");
     fetchSkills(searchMode === "domain" ? role : undefined, query);
   };
 
@@ -181,7 +183,9 @@ export default function RoleSelector() {
           onChange={(e) => {
             const selectedRole = e.target.value;
             setRole(selectedRole);
-            fetchSkills(selectedRole);
+            if (searchMode === "domain") {
+              fetchSkills(selectedRole);
+            }
           }}
           disabled={!func}
         >
@@ -204,7 +208,9 @@ export default function RoleSelector() {
           </div>
           <div
             onClick={() => setSearchMode("general")}
-            className={`toggle-pill ${searchMode === "general" ? "active" : ""}`}
+            className={`toggle-pill ${
+              searchMode === "general" ? "active" : ""
+            }`}
           >
             General <span className="toggle-indicator green"></span>
           </div>
@@ -228,9 +234,9 @@ export default function RoleSelector() {
 
         {/* Notice */}
         {notice && (
-          <p className="text-sm text-blue-600 italic mb-2 text-center">
-            {notice}
-          </p>
+          <div className="notice-banner">
+            ⚠️ {notice}
+          </div>
         )}
 
         {/* Skills Grid */}
