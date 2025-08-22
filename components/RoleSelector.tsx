@@ -11,7 +11,6 @@ export default function RoleSelector() {
   const [func, setFunc] = useState<string>("");
   const [role, setRole] = useState<string>("");
   const [skills, setSkills] = useState<string[]>([]);
-  const [structured, setStructured] = useState<any>(null);
   const [details, setDetails] = useState<Record<string, string>>({});
   const [cache, setCache] = useState<Record<string, string[]>>({});
   const [query, setQuery] = useState<string>("");
@@ -20,68 +19,112 @@ export default function RoleSelector() {
   const [openTile, setOpenTile] = useState<string | null>(null);
   const [notice, setNotice] = useState<string>("");
 
-  // Load cache
+  // ✅ Cache handling
   useEffect(() => {
     const savedCache = localStorage.getItem("skillsCache");
     if (savedCache) setCache(JSON.parse(savedCache));
   }, []);
+
   useEffect(() => {
     localStorage.setItem("skillsCache", JSON.stringify(cache));
   }, [cache]);
 
   const fetchSkills = async (selectedRole?: string, searchQuery?: string) => {
-    setNotice(""); setSkills([]); setStructured(null);
-
-    let url = "/api/getSkills?";
-    if (searchMode === "domain") {
-      if (selectedRole) url += `role=${encodeURIComponent(selectedRole)}&`;
-      if (industry) url += `industry=${encodeURIComponent(industry)}&`;
-      if (func) url += `func=${encodeURIComponent(func)}&`;
-    }
-    if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}&`;
-    url += `mode=${searchMode}`;
+    let key = "";
+    if (searchQuery && selectedRole) key = `${selectedRole}::${searchQuery}`;
+    else if (searchQuery) key = `general::${searchQuery}`;
+    else if (selectedRole) key = selectedRole;
 
     try {
+      let url = "/api/getSkills?";
+      if (searchMode === "domain") {
+        if (selectedRole) url += `role=${encodeURIComponent(selectedRole)}&`;
+        if (industry) url += `industry=${encodeURIComponent(industry)}&`;
+        if (func) url += `func=${encodeURIComponent(func)}&`;
+      }
+      if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}&`;
+      url += `mode=${searchMode}`;
+
       const res = await fetch(url);
       const data = await res.json();
 
-      if (data.type === "warning") {
-        setNotice(data.title);
-        return;
-      }
-      if (data.type === "skills" && data.skills) {
+      if (data.skills && data.skills.length > 0) {
         setSkills(data.skills);
+        if (key) setCache((prev) => ({ ...prev, [key]: data.skills }));
+        setExpanded(false);
+        setOpenTile(null);
         return;
       }
-      setStructured(data);
     } catch {
-      setNotice("❌ Failed to fetch data");
+      console.warn("❌ API fetch failed, trying cache/local");
     }
+
+    if (key && cache[key]) {
+      setSkills(cache[key]);
+      setExpanded(false);
+      setOpenTile(null);
+      return;
+    }
+
+    if (
+      selectedRole &&
+      industry &&
+      func &&
+      (SKILLS as any)[industry]?.[func]?.[selectedRole]
+    ) {
+      const roleSkills = (SKILLS as any)[industry][func][selectedRole];
+      setSkills(roleSkills);
+      setCache((prev) => ({ ...prev, [selectedRole]: roleSkills }));
+      setExpanded(false);
+      setOpenTile(null);
+      return;
+    }
+
+    setSkills(["❌ No skills found"]);
   };
 
   const handleTileClick = async (skill: string) => {
     setOpenTile(openTile === skill ? null : skill);
+
     if (details[skill]) return;
+
     try {
-      const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
+      const res = await fetch(
+        `/api/getSkillDetail?skill=${encodeURIComponent(skill)}`
+      );
       const data = await res.json();
-      setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
-    } catch {
-      setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
+      setDetails((prev) => ({
+        ...prev,
+        [skill]: data.detail || "No detail available.",
+      }));
+    } catch (err) {
+      console.error("Failed to fetch detail:", err);
+      setDetails((prev) => ({
+        ...prev,
+        [skill]: "❌ Failed to load detail",
+      }));
     }
   };
 
   const handleClear = () => {
-    setIndustry(""); setFunc(""); setRole(""); setQuery("");
-    setSkills([]); setStructured(null); setDetails({});
-    setExpanded(false); setOpenTile(null); setNotice("");
+    setIndustry("");
+    setFunc("");
+    setRole("");
+    setQuery("");
+    setSkills([]);
+    setDetails({});
+    setExpanded(false);
+    setOpenTile(null);
+    setNotice("");
   };
 
   const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
-  const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
+  const roles =
+    industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
 
   const handleSearch = () => {
     if (!query) return;
+    setNotice("");
     fetchSkills(searchMode === "domain" ? role : undefined, query);
   };
 
@@ -93,8 +136,66 @@ export default function RoleSelector() {
           <span className="subtitle">Knowledge at warp speed 🌌</span>
         </h1>
 
-        {/* Industry / Function / Role dropdowns (unchanged) */}
+        {/* Industry */}
+        <p className="dropdown-label">🌐 Select Industry</p>
+        <select
+          value={industry}
+          onChange={(e) => {
+            setIndustry(e.target.value);
+            setFunc("");
+            setRole("");
+            setSkills([]);
+          }}
+        >
+          <option value="">Select Industry</option>
+          {Object.keys(ROLES).map((ind) => (
+            <option key={ind} value={ind}>
+              {ind}
+            </option>
+          ))}
+        </select>
 
+        {/* Function */}
+        <p className="dropdown-label">⚡ Select Function</p>
+        <select
+          value={func}
+          onChange={(e) => {
+            setFunc(e.target.value);
+            setRole("");
+            setSkills([]);
+          }}
+          disabled={!industry}
+        >
+          <option value="">Select Function</option>
+          {functions.map((f: string) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+
+        {/* Role */}
+        <p className="dropdown-label">🎯 Select Role</p>
+        <select
+          value={role}
+          onChange={(e) => {
+            const selectedRole = e.target.value;
+            setRole(selectedRole);
+            if (searchMode === "domain") {
+              fetchSkills(selectedRole);
+            }
+          }}
+          disabled={!func}
+        >
+          <option value="">Select Role</option>
+          {roles.map((r: string) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+
+        {/* Search */}
         <p className="dropdown-label">🔍 Search Skills</p>
         <div className="toggle-container">
           <div
@@ -118,21 +219,21 @@ export default function RoleSelector() {
             placeholder="Type your question here"
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button onClick={handleSearch} disabled={!query} className="search-btn">Search</button>
+          <button
+            onClick={handleSearch}
+            disabled={!query}
+            className="search-btn"
+          >
+            Search
+          </button>
         </div>
 
-        {notice && <div className="notice-banner">⚠️ {notice}</div>}
-
-        {structured && (
-          <div className="response-card">
-            <h3>📌 {structured.title}</h3>
-            {structured.steps && (
-              <ul>{structured.steps.map((s: string, i: number) => <li key={i}>{s}</li>)}</ul>
-            )}
-            {structured.pro_tip && <p>💡 {structured.pro_tip}</p>}
-          </div>
+        {/* Notice */}
+        {notice && (
+          <div className="notice-banner">⚠️ {notice}</div>
         )}
 
+        {/* Skills Grid */}
         <div className="skills-grid">
           {(expanded ? skills : skills.slice(0, 3)).map((skill, idx) => (
             <TileCard
@@ -145,14 +246,20 @@ export default function RoleSelector() {
           ))}
         </div>
 
-        {(skills.length > 0 || structured) && (
+        {/* Expand / Clear */}
+        {skills.length > 0 && (
           <div className="button-row">
             {skills.length > 3 && (
-              <button onClick={() => setExpanded(!expanded)} className="expand-btn">
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="expand-btn"
+              >
                 {expanded ? "Collapse" : "Expand"}
               </button>
             )}
-            <button onClick={handleClear} className="clear-btn">Clear</button>
+            <button onClick={handleClear} className="clear-btn">
+              Clear
+            </button>
           </div>
         )}
       </div>
