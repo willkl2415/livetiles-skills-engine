@@ -113,10 +113,22 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
     let content = response.choices[0].message.content?.trim() || "[]";
     content = content.replace(/```json/gi, "").replace(/```/g, "").trim();
 
-    let skills: any = [];
+    let skills: string[] = [];
+
     try {
-      skills = JSON.parse(content);
+      const parsed = JSON.parse(content);
+
+      if (Array.isArray(parsed)) {
+        // ✅ Case 1: Simple array of skills
+        skills = parsed;
+      } else if (parsed && typeof parsed === "object" && parsed.steps) {
+        // ✅ Case 2: Object with {title, steps, pro_tip}
+        if (parsed.title) skills.push(`📌 ${parsed.title}`);
+        skills = skills.concat(parsed.steps);
+        if (parsed.pro_tip) skills.push(`💡 Pro Tip: ${parsed.pro_tip}`);
+      }
     } catch {
+      // ✅ Case 3: Fallback if GPT gave plain text lines
       skills = content
         .split("\n")
         .map((s) =>
