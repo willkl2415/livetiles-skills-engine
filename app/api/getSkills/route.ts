@@ -29,6 +29,19 @@ function detectIntent(query: string): "procedural" | "definition" | "list" | "co
   return "general";
 }
 
+// ✅ Shared irrelevance keywords
+const irrelevantKeywords = [
+  "boil an egg",
+  "make a cup of tea",
+  "iron a shirt",
+  "cook",
+  "recipe",
+  "laundry",
+  "clean",
+  "household",
+  "domestic"
+];
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const role = searchParams.get("role");
@@ -46,6 +59,15 @@ export async function GET(req: Request) {
 
     // === General mode (IGNORE role/industry/func) ===
     if (query && searchMode === "general") {
+      const qLower = query.toLowerCase();
+      if (irrelevantKeywords.some(p => qLower.includes(p))) {
+        return NextResponse.json({
+          skills: [
+            "⚠️ That question doesn’t seem relevant to professional skills. Please rephrase."
+          ]
+        });
+      }
+
       prompt = `Generate ONLY a valid JSON array of 5-10 professional skills directly relevant to this query: "${query}".
 They must be workplace/professional skills only — do not return personal, domestic, or household abilities.
 No explanations, no code block markers, no formatting --- just pure JSON array.`;
@@ -55,17 +77,6 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
     else if (searchMode === "domain") {
       // Irrelevance filter
       if (query) {
-        const irrelevantKeywords = [
-          "boil an egg",
-          "make a cup of tea",
-          "iron a shirt",
-          "cook",
-          "recipe",
-          "laundry",
-          "clean",
-          "household",
-          "domestic"
-        ];
         const qLower = query.toLowerCase();
         if (irrelevantKeywords.some(p => qLower.includes(p))) {
           return NextResponse.json({
@@ -122,6 +133,15 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
 
     // === Fallback (query only, no role, no mode forced) ===
     else if (query) {
+      const qLower = query.toLowerCase();
+      if (irrelevantKeywords.some(p => qLower.includes(p))) {
+        return NextResponse.json({
+          skills: [
+            "⚠️ That question doesn’t seem relevant to professional skills. Please rephrase."
+          ]
+        });
+      }
+
       prompt = `Generate ONLY a valid JSON array of 5-10 professional skills directly relevant to this query: "${query}".
 They must be workplace/professional skills only — do not return personal, domestic, or household abilities.
 No explanations, no code block markers, no formatting --- just pure JSON array.`;
