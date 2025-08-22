@@ -33,6 +33,8 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const role = searchParams.get("role");
   const query = searchParams.get("query");
+  const industry = searchParams.get("industry") || ""; // ✅ optional, but useful for context
+  const func = searchParams.get("func") || "";
 
   if (!role && !query) {
     return NextResponse.json({ error: "Missing role or query" }, { status: 400 });
@@ -135,6 +137,21 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
           s.replace(/^\d+[\.\)]\s*/, "").replace(/["',\[\]]/g, "").trim()
         )
         .filter((s) => s.length > 0);
+    }
+
+    // ✅ Context relevance check (prevents "boil an egg" etc.)
+    if (query && role) {
+      const contextWords = [role, industry, func].filter(Boolean).map(s => s.toLowerCase());
+      const joinedResponse = skills.join(" ").toLowerCase();
+
+      const relevant = contextWords.some(word => joinedResponse.includes(word));
+      if (!relevant) {
+        return NextResponse.json({
+          skills: [
+            "⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."
+          ]
+        });
+      }
     }
 
     return NextResponse.json({ skills });
