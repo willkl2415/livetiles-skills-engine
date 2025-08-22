@@ -41,7 +41,7 @@ export default function RoleSelector() {
       if (industry) url += `industry=${encodeURIComponent(industry)}&`;
       if (func) url += `func=${encodeURIComponent(func)}&`;
       if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}&`;
-      url += `mode=${searchMode}`; // ✅ NEW: pass mode to API
+      url += `mode=${searchMode}`; // ✅ always include mode
 
       const res = await fetch(url);
       const data = await res.json();
@@ -204,9 +204,7 @@ export default function RoleSelector() {
           </div>
           <div
             onClick={() => setSearchMode("general")}
-            className={`toggle-pill ${
-              searchMode === "general" ? "active" : ""
-            }`}
+            className={`toggle-pill ${searchMode === "general" ? "active" : ""}`}
           >
             General <span className="toggle-indicator green"></span>
           </div>

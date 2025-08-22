@@ -1,4 +1,3 @@
-// app/api/getSkills/route.ts
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -35,14 +34,14 @@ export async function GET(req: Request) {
   const query = searchParams.get("query");
   const industry = searchParams.get("industry") || "";
   const func = searchParams.get("func") || "";
-  const searchMode = searchParams.get("mode") || "domain"; // ✅ added
+  const searchMode = searchParams.get("mode") || "domain"; // ✅ read mode
 
   if (!role && !query) {
     return NextResponse.json({ error: "Missing role or query" }, { status: 400 });
   }
 
   try {
-    // === Irrelevance filter (Domain mode ONLY) ===
+    // === Irrelevance filter (Domain only) ===
     if (query && searchMode === "domain") {
       const irrelevantKeywords = [
         "boil an egg",
@@ -74,7 +73,7 @@ export async function GET(req: Request) {
 No explanations, no code block markers, no formatting --- just pure JSON array.`;
     }
 
-    // === Role + Query ===
+    // === Role + Query (Domain mode) ===
     else if (query && role && searchMode === "domain") {
       const intent = detectIntent(query);
 
@@ -112,8 +111,8 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
       }
     }
 
-    // === Query only (General mode) ===
-    else if (query) {
+    // === General mode ===
+    else if (query && searchMode === "general") {
       prompt = `Generate ONLY a valid JSON array of 5-10 professional skills directly relevant to this query: "${query}".
 They must be workplace/professional skills only — do not return personal, domestic, or household abilities.
 No explanations, no code block markers, no formatting --- just pure JSON array.`;
