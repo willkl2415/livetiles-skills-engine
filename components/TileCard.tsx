@@ -22,12 +22,18 @@ export default function TileCard({ skill, detail, isOpen, onClick }: TileCardPro
 
   return (
     <div
-      className={`skill-card cursor-pointer transition ${isOpen ? "ring-2 ring-purple-500" : "hover:opacity-90"}`}
+      className={`skill-card cursor-pointer transition ${
+        isOpen ? "ring-2 ring-purple-500" : "hover:opacity-90"
+      }`}
       style={{ backgroundColor: bgColor }}
       onClick={onClick}
     >
       <span className="skill-text">{skill}</span>
-      {isOpen && detail && <p className="skill-detail mt-2 text-sm">{detail}</p>}
+
+      {/* 🔑 If open, show detail (can include multi-line steps) */}
+      {isOpen && detail && (
+        <div className="skill-detail mt-2 text-sm whitespace-pre-line">{detail}</div>
+      )}
     </div>
   );
 }

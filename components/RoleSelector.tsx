@@ -19,7 +19,7 @@ export default function RoleSelector() {
   const [openTile, setOpenTile] = useState<string | null>(null);
   const [notice, setNotice] = useState<string>("");
 
-  // ✅ Cache handling
+  // ✅ Load/save cache
   useEffect(() => {
     const savedCache = localStorage.getItem("skillsCache");
     if (savedCache) setCache(JSON.parse(savedCache));
@@ -59,6 +59,7 @@ export default function RoleSelector() {
       console.warn("❌ API fetch failed, trying cache/local");
     }
 
+    // Fallback: cache
     if (key && cache[key]) {
       setSkills(cache[key]);
       setExpanded(false);
@@ -66,12 +67,8 @@ export default function RoleSelector() {
       return;
     }
 
-    if (
-      selectedRole &&
-      industry &&
-      func &&
-      (SKILLS as any)[industry]?.[func]?.[selectedRole]
-    ) {
+    // Fallback: local SKILLS object
+    if (selectedRole && industry && func && (SKILLS as any)[industry]?.[func]?.[selectedRole]) {
       const roleSkills = (SKILLS as any)[industry][func][selectedRole];
       setSkills(roleSkills);
       setCache((prev) => ({ ...prev, [selectedRole]: roleSkills }));
@@ -85,31 +82,20 @@ export default function RoleSelector() {
 
   const handleTileClick = async (skill: string) => {
     setOpenTile(openTile === skill ? null : skill);
-
     if (details[skill]) return;
 
     try {
-      const res = await fetch(
-        `/api/getSkillDetail?skill=${encodeURIComponent(skill)}`
-      );
+      const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
       const data = await res.json();
-      setDetails((prev) => ({
-        ...prev,
-        [skill]: data.detail || "No detail available.",
-      }));
+      setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
     } catch (err) {
       console.error("Failed to fetch detail:", err);
-      setDetails((prev) => ({
-        ...prev,
-        [skill]: "❌ Failed to load detail",
-      }));
+      setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
     }
   };
 
   const handleClear = () => {
-    setIndustry("");
-    setFunc("");
-    setRole("");
+    // ✅ Clear only query + results, keep Industry/Function/Role
     setQuery("");
     setSkills([]);
     setDetails({});
@@ -119,8 +105,7 @@ export default function RoleSelector() {
   };
 
   const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
-  const roles =
-    industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
+  const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
 
   const handleSearch = () => {
     if (!query) return;
@@ -219,19 +204,13 @@ export default function RoleSelector() {
             placeholder="Type your question here"
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button
-            onClick={handleSearch}
-            disabled={!query}
-            className="search-btn"
-          >
+          <button onClick={handleSearch} disabled={!query} className="search-btn">
             Search
           </button>
         </div>
 
         {/* Notice */}
-        {notice && (
-          <div className="notice-banner">⚠️ {notice}</div>
-        )}
+        {notice && <div className="notice-banner">⚠️ {notice}</div>}
 
         {/* Skills Grid */}
         <div className="skills-grid">
@@ -250,10 +229,7 @@ export default function RoleSelector() {
         {skills.length > 0 && (
           <div className="button-row">
             {skills.length > 3 && (
-              <button
-                onClick={() => setExpanded(!expanded)}
-                className="expand-btn"
-              >
+              <button onClick={() => setExpanded(!expanded)} className="expand-btn">
                 {expanded ? "Collapse" : "Expand"}
               </button>
             )}
