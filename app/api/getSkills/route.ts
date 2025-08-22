@@ -1,3 +1,4 @@
+// app/api/getSkills/route.ts
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -6,7 +7,7 @@ import OpenAI from "openai";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// ✅ Simple intent detection
+// ✅ Intent detection
 function detectIntent(query: string): "procedural" | "definition" | "list" | "comparative" | "reason" | "general" {
   const q = query.toLowerCase();
 
@@ -34,90 +35,99 @@ export async function GET(req: Request) {
   const query = searchParams.get("query");
   const industry = searchParams.get("industry") || "";
   const func = searchParams.get("func") || "";
-  const searchMode = searchParams.get("mode") || "domain"; // ✅ read mode
+  const searchMode = searchParams.get("mode") || "domain"; // "domain" | "general"
 
   if (!role && !query) {
     return NextResponse.json({ error: "Missing role or query" }, { status: 400 });
   }
 
   try {
-    // === Irrelevance filter (Domain only) ===
-    if (query && searchMode === "domain") {
-      const irrelevantKeywords = [
-        "boil an egg",
-        "make a cup of tea",
-        "iron a shirt",
-        "cook",
-        "recipe",
-        "laundry",
-        "clean",
-        "household",
-        "domestic"
-      ];
-
-      const qLower = query.toLowerCase();
-      if (irrelevantKeywords.some(p => qLower.includes(p))) {
-        return NextResponse.json({
-          skills: [
-            "⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."
-          ]
-        });
-      }
-    }
-
     let prompt = "";
 
-    // === Role-only (default) ===
-    if (role && !query) {
-      prompt = `Return ONLY a valid JSON array of the top 10 professional skills for a ${role}.
-No explanations, no code block markers, no formatting --- just pure JSON array.`;
-    }
-
-    // === Role + Query (Domain mode) ===
-    else if (query && role && searchMode === "domain") {
-      const intent = detectIntent(query);
-
-      switch (intent) {
-        case "procedural":
-          prompt = `Generate ONLY a valid JSON object for a step-by-step guide showing how a ${role} should ${query}.
-Return JSON: {title, steps, pro_tip}, where steps = 5-7 clear steps (<120 words).`;
-          break;
-
-        case "definition":
-          prompt = `Generate ONLY a valid JSON object that explains "${query}" for a ${role}.
-Return JSON: {title, steps, pro_tip}, where steps = 3 key points (<80 words).`;
-          break;
-
-        case "list":
-          prompt = `Generate ONLY a valid JSON object that lists the key elements of "${query}" for a ${role}.
-Return JSON: {title, steps, pro_tip}, where steps = 4-6 short items.`;
-          break;
-
-        case "comparative":
-          prompt = `Generate ONLY a valid JSON object that compares ${query} for a ${role}.
-Return JSON: {title, steps, pro_tip}, where steps = pros/cons or differences in bullet form.`;
-          break;
-
-        case "reason":
-          prompt = `Generate ONLY a valid JSON object that explains why "${query}" is important to a ${role}.
-Return JSON: {title, steps, pro_tip}, where steps = 3-5 concise justifications.`;
-          break;
-
-        default:
-          prompt = `Generate ONLY a valid JSON array of 5-10 micro-skills directly relevant to this query: "${query}".
-Tailor the skills specifically for the role: ${role}.
-No explanations, no code block markers, no formatting --- just pure JSON array.`;
-          break;
-      }
-    }
-
-    // === General mode ===
-    else if (query && searchMode === "general") {
+    // === General mode (IGNORE role/industry/func) ===
+    if (query && searchMode === "general") {
       prompt = `Generate ONLY a valid JSON array of 5-10 professional skills directly relevant to this query: "${query}".
 They must be workplace/professional skills only — do not return personal, domestic, or household abilities.
 No explanations, no code block markers, no formatting --- just pure JSON array.`;
     }
 
+    // === Domain mode ===
+    else if (searchMode === "domain") {
+      // Irrelevance filter
+      if (query) {
+        const irrelevantKeywords = [
+          "boil an egg",
+          "make a cup of tea",
+          "iron a shirt",
+          "cook",
+          "recipe",
+          "laundry",
+          "clean",
+          "household",
+          "domestic"
+        ];
+        const qLower = query.toLowerCase();
+        if (irrelevantKeywords.some(p => qLower.includes(p))) {
+          return NextResponse.json({
+            skills: [
+              "⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."
+            ]
+          });
+        }
+      }
+
+      // Role only
+      if (role && !query) {
+        prompt = `Return ONLY a valid JSON array of the top 10 professional skills for a ${role}.
+No explanations, no code block markers, no formatting --- just pure JSON array.`;
+      }
+
+      // Role + query
+      else if (query && role) {
+        const intent = detectIntent(query);
+        switch (intent) {
+          case "procedural":
+            prompt = `Generate ONLY a valid JSON object for a step-by-step guide showing how a ${role} should ${query}.
+Return JSON: {title, steps, pro_tip}, where steps = 5-7 clear steps (<120 words).`;
+            break;
+
+          case "definition":
+            prompt = `Generate ONLY a valid JSON object that explains "${query}" for a ${role}.
+Return JSON: {title, steps, pro_tip}, where steps = 3 key points (<80 words).`;
+            break;
+
+          case "list":
+            prompt = `Generate ONLY a valid JSON object that lists the key elements of "${query}" for a ${role}.
+Return JSON: {title, steps, pro_tip}, where steps = 4-6 short items.`;
+            break;
+
+          case "comparative":
+            prompt = `Generate ONLY a valid JSON object that compares ${query} for a ${role}.
+Return JSON: {title, steps, pro_tip}, where steps = pros/cons or differences in bullet form.`;
+            break;
+
+          case "reason":
+            prompt = `Generate ONLY a valid JSON object that explains why "${query}" is important to a ${role}.
+Return JSON: {title, steps, pro_tip}, where steps = 3-5 concise justifications.`;
+            break;
+
+          default:
+            prompt = `Generate ONLY a valid JSON array of 5-10 micro-skills directly relevant to this query: "${query}".
+Tailor the skills specifically for the role: ${role}.
+No explanations, no code block markers, no formatting --- just pure JSON array.`;
+            break;
+        }
+      }
+    }
+
+    // === Fallback (query only, no role, no mode forced) ===
+    else if (query) {
+      prompt = `Generate ONLY a valid JSON array of 5-10 professional skills directly relevant to this query: "${query}".
+They must be workplace/professional skills only — do not return personal, domestic, or household abilities.
+No explanations, no code block markers, no formatting --- just pure JSON array.`;
+    }
+
+    // === OpenAI call ===
     let response;
     try {
       response = await client.chat.completions.create({
@@ -140,7 +150,6 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
 
     try {
       const parsed = JSON.parse(content);
-
       if (Array.isArray(parsed)) {
         skills = parsed;
       } else if (parsed && typeof parsed === "object" && parsed.steps) {
@@ -157,11 +166,10 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
         .filter((s) => s.length > 0);
     }
 
-    // ✅ Domain-mode post-response relevance check
+    // ✅ Domain-mode context check
     if (query && role && searchMode === "domain") {
       const contextWords = [role, industry, func].filter(Boolean).map(s => s.toLowerCase());
       const joinedResponse = skills.join(" ").toLowerCase();
-
       const relevant = contextWords.some(word => joinedResponse.includes(word));
       if (!relevant) {
         return NextResponse.json({
