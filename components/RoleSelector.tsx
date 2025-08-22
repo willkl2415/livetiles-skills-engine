@@ -68,7 +68,12 @@ export default function RoleSelector() {
     }
 
     // Fallback: local SKILLS object
-    if (selectedRole && industry && func && (SKILLS as any)[industry]?.[func]?.[selectedRole]) {
+    if (
+      selectedRole &&
+      industry &&
+      func &&
+      (SKILLS as any)[industry]?.[func]?.[selectedRole]
+    ) {
       const roleSkills = (SKILLS as any)[industry][func][selectedRole];
       setSkills(roleSkills);
       setCache((prev) => ({ ...prev, [selectedRole]: roleSkills }));
@@ -102,17 +107,15 @@ export default function RoleSelector() {
   };
 
   const handleClear = () => {
+    setIndustry("");
+    setFunc("");
+    setRole("");
     setQuery("");
     setSkills([]);
     setDetails({});
     setExpanded(false);
     setOpenTile(null);
     setNotice("");
-
-    // ✅ re-fetch default skills for current role if still selected
-    if (role) {
-      fetchSkills(role);
-    }
   };
 
   const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
@@ -215,7 +218,11 @@ export default function RoleSelector() {
             placeholder="Type your question here"
             onChange={(e) => setQuery(e.target.value)}
           />
-          <button onClick={handleSearch} disabled={!query} className="search-btn">
+          <button
+            onClick={handleSearch}
+            disabled={!query}
+            className="search-btn"
+          >
             Search
           </button>
         </div>
@@ -240,7 +247,10 @@ export default function RoleSelector() {
         {skills.length > 0 && (
           <div className="button-row">
             {skills.length > 3 && (
-              <button onClick={() => setExpanded(!expanded)} className="expand-btn">
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="expand-btn"
+              >
                 {expanded ? "Collapse" : "Expand"}
               </button>
             )}

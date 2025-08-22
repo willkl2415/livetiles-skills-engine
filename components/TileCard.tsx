@@ -16,7 +16,9 @@ interface TileCardProps {
 
 export default function TileCard({ skill, detail, isOpen, onClick }: TileCardProps) {
   const bgColor = useMemo(() => {
-    const index = skill.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % COLORS.length;
+    const index =
+      skill.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
+      COLORS.length;
     return COLORS[index];
   }, [skill]);
 
@@ -30,9 +32,11 @@ export default function TileCard({ skill, detail, isOpen, onClick }: TileCardPro
     >
       <span className="skill-text">{skill}</span>
 
-      {/* 🔑 If open, show detail (can include multi-line steps) */}
+      {/* 🔑 Only show detail if open */}
       {isOpen && detail && (
-        <div className="skill-detail mt-2 text-sm whitespace-pre-line">{detail}</div>
+        <p className="skill-detail mt-2 text-sm">
+          {detail || "No details available."}
+        </p>
       )}
     </div>
   );

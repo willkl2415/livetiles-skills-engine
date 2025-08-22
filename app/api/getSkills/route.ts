@@ -45,58 +45,58 @@ export async function GET(req: Request) {
       const intent = detectIntent(query);
       switch (intent) {
         case "procedural":
-          prompt = `Provide clear step-by-step instructions for: "${query}". Return JSON {title, steps, pro_tip}`;
+          prompt = `Provide clear step-by-step instructions for: "${query}". Return ONLY valid JSON {title, steps, pro_tip}`;
           break;
         case "definition":
-          prompt = `Explain: "${query}". Return JSON {title, explanation, key_points}`;
+          prompt = `Explain: "${query}". Return ONLY valid JSON {title, explanation, key_points}`;
           break;
         case "list":
-          prompt = `List key items for: "${query}". Return JSON {title, items}`;
+          prompt = `List key items for: "${query}". Return ONLY valid JSON {title, items}`;
           break;
         case "comparative":
-          prompt = `Compare: "${query}". Return JSON {title, comparison, key_points}`;
+          prompt = `Compare: "${query}". Return ONLY valid JSON {title, comparison_points}`;
           break;
         case "reason":
-          prompt = `Explain why "${query}" is important. Return JSON {title, explanation, key_points}`;
+          prompt = `Explain why "${query}" is important. Return ONLY valid JSON {title, reasons}`;
           break;
         default:
-          prompt = `Answer clearly: "${query}". Return JSON {answer, details}`;
+          prompt = `Answer clearly: "${query}". Return ONLY valid JSON {title, answer, details}`;
           break;
       }
     }
 
     // === DOMAIN MODE ===
     else if (searchMode === "domain") {
-      if (role && !query) {
-        prompt = `Return ONLY a valid JSON array of the top 10 professional skills for a ${role}. Pure JSON array.`;
-      } else if (query && role) {
+      if (query && role) {
         const intent = detectIntent(query);
         switch (intent) {
           case "procedural":
-            prompt = `As a ${role}, explain "${query}" in steps. Return JSON {title, steps, pro_tip}`;
+            prompt = `Explain how a ${role} should ${query}. Return ONLY valid JSON {title, steps, pro_tip}`;
             break;
           case "definition":
-            prompt = `As a ${role}, define "${query}". Return JSON {title, explanation, key_points}`;
+            prompt = `Explain "${query}" in the context of a ${role}. Return ONLY valid JSON {title, explanation, key_points}`;
             break;
           case "list":
-            prompt = `As a ${role}, list the key elements of "${query}". Return JSON {title, items}`;
+            prompt = `List elements of "${query}" for a ${role}. Return ONLY valid JSON {title, items}`;
             break;
           case "comparative":
-            prompt = `As a ${role}, compare ${query}. Return JSON {title, comparison, key_points}`;
+            prompt = `Compare ${query} for a ${role}. Return ONLY valid JSON {title, comparison_points}`;
             break;
           case "reason":
-            prompt = `As a ${role}, explain why "${query}" is important. Return JSON {title, explanation, key_points}`;
+            prompt = `Explain why "${query}" is important for a ${role}. Return ONLY valid JSON {title, reasons}`;
             break;
           default:
-            prompt = `Return ONLY a valid JSON array of 5-10 micro-skills relevant to "${query}" for a ${role}.`;
+            prompt = `Generate ONLY a JSON array of 5–10 micro-skills related to "${query}" for a ${role}.`;
             break;
         }
+      } else if (role && !query) {
+        prompt = `Generate ONLY a JSON array of the top 10 professional skills for a ${role}.`;
       }
     }
 
     // === FALLBACK ===
     else if (query) {
-      prompt = `Generate ONLY a valid JSON array of 5-10 professional skills for "${query}".`;
+      prompt = `Generate ONLY a JSON array of professional skills for "${query}".`;
     }
 
     // OpenAI call
@@ -121,18 +121,24 @@ export async function GET(req: Request) {
     let skills: string[] = [];
     try {
       const parsed = JSON.parse(content);
+
       if (Array.isArray(parsed)) {
         skills = parsed;
       } else if (parsed && typeof parsed === "object") {
         if (parsed.title) skills.push(`📌 ${parsed.title}`);
         if (parsed.steps) skills = skills.concat(parsed.steps);
         if (parsed.items) skills = skills.concat(parsed.items);
+        if (parsed.comparison_points) skills = skills.concat(parsed.comparison_points);
+        if (parsed.reasons) skills = skills.concat(parsed.reasons);
         if (parsed.answer) skills.push(parsed.answer);
+        if (parsed.details) skills.push(parsed.details);
         if (parsed.pro_tip) skills.push(`💡 Pro Tip: ${parsed.pro_tip}`);
-        if (parsed.key_points) skills = skills.concat(parsed.key_points);
       }
     } catch {
-      skills = content.split("\n").map(s => s.replace(/^\d+[\.\)]\s*/, "").replace(/["',\[\]]/g, "").trim()).filter(s => s.length > 0);
+      skills = content
+        .split("\n")
+        .map(s => s.replace(/^\d+[\.\)]\s*/, "").replace(/["',\[\]]/g, "").trim())
+        .filter(s => s.length > 0);
     }
 
     return NextResponse.json({ skills });
