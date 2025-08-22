@@ -17,6 +17,7 @@ export default function RoleSelector() {
   const [searchMode, setSearchMode] = useState<"domain" | "general">("domain");
   const [expanded, setExpanded] = useState<boolean>(false);
   const [openTile, setOpenTile] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string>("");
 
   // ✅ Load/save cache
   useEffect(() => {
@@ -27,6 +28,20 @@ export default function RoleSelector() {
   useEffect(() => {
     localStorage.setItem("skillsCache", JSON.stringify(cache));
   }, [cache]);
+
+  // ✅ Detect domain-style queries
+  const looksDomainLike = (q: string) => {
+    const lower = q.toLowerCase();
+    return (
+      lower.startsWith("how do i") ||
+      lower.startsWith("how to") ||
+      lower.startsWith("what are") ||
+      lower.includes("steps") ||
+      lower.includes("process") ||
+      lower.includes("plan") ||
+      lower.includes("strategy")
+    );
+  };
 
   const fetchSkills = async (selectedRole?: string, searchQuery?: string) => {
     let key = "";
@@ -98,10 +113,25 @@ export default function RoleSelector() {
     setDetails({});
     setExpanded(false);
     setOpenTile(null);
+    setNotice("");
   };
 
   const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
   const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
+
+  const handleSearch = () => {
+    if (!query) return;
+
+    // ✅ If user is in "general" but query looks domain-like
+    if (searchMode === "general" && looksDomainLike(query) && role) {
+      setSearchMode("domain");
+      setNotice("🔀 We switched you to Domain mode because this looks like a role-specific question.");
+      fetchSkills(role, query);
+    } else {
+      setNotice("");
+      fetchSkills(searchMode === "domain" ? role : undefined, query);
+    }
+  };
 
   return (
     <div className="phone-frame">
@@ -193,15 +223,18 @@ export default function RoleSelector() {
             onChange={(e) => setQuery(e.target.value)}
           />
           <button
-            onClick={() =>
-              fetchSkills(searchMode === "domain" ? role : undefined, query)
-            }
+            onClick={handleSearch}
             disabled={!query}
             className="search-btn"
           >
             Search
           </button>
         </div>
+
+        {/* Notice */}
+        {notice && (
+          <p className="text-sm text-blue-600 italic mb-2 text-center">{notice}</p>
+        )}
 
         {/* Skills Grid */}
         <div className="skills-grid">
