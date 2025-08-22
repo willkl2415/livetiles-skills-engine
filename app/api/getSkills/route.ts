@@ -29,9 +29,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const role = searchParams.get("role");
   const query = searchParams.get("query");
-  const industry = searchParams.get("industry") || "";
-  const func = searchParams.get("func") || "";
-  const searchMode = searchParams.get("mode") || "domain";
+  let searchMode = searchParams.get("mode") || "domain";
 
   if (!role && !query) {
     return NextResponse.json({ error: "Missing role or query" }, { status: 400 });
@@ -40,82 +38,66 @@ export async function GET(req: Request) {
   try {
     let prompt = "";
 
+    // 🔄 Auto-switch: If user asks a domain-style Q in General mode
+    const intent = query ? detectIntent(query) : "general";
+    if (searchMode === "general" && intent !== "general" && role) {
+      searchMode = "domain";
+    }
+
     // === GENERAL MODE ===
     if (query && searchMode === "general") {
-      const intent = detectIntent(query);
-      switch (intent) {
-        case "procedural":
-          prompt = `Provide clear step-by-step instructions for: "${query}". Return ONLY valid JSON {title, steps, pro_tip}`;
-          break;
-        case "definition":
-          prompt = `Explain: "${query}". Return ONLY valid JSON {title, explanation, key_points}`;
-          break;
-        case "list":
-          prompt = `List key items for: "${query}". Return ONLY valid JSON {title, items}`;
-          break;
-        case "comparative":
-          prompt = `Compare: "${query}". Return ONLY valid JSON {title, comparison_points}`;
-          break;
-        case "reason":
-          prompt = `Explain why "${query}" is important. Return ONLY valid JSON {title, reasons}`;
-          break;
-        default:
-          prompt = `Answer clearly: "${query}". Return ONLY valid JSON {title, answer, details}`;
-          break;
-      }
+      prompt = `Answer clearly and concisely: "${query}". 
+Return ONLY valid JSON {title, answer, details}.
+Limit to 150 tokens.`;
     }
 
     // === DOMAIN MODE ===
     else if (searchMode === "domain") {
       if (query && role) {
-        const intent = detectIntent(query);
         switch (intent) {
           case "procedural":
-            prompt = `Explain how a ${role} should ${query}. Return ONLY valid JSON {title, steps, pro_tip}`;
+            prompt = `How should a ${role} ${query}? Return ONLY valid JSON {title, steps, pro_tip}. Limit to 150 tokens.`;
             break;
           case "definition":
-            prompt = `Explain "${query}" in the context of a ${role}. Return ONLY valid JSON {title, explanation, key_points}`;
+            prompt = `Explain "${query}" in context of a ${role}. Return ONLY valid JSON {title, explanation, key_points}. Limit to 150 tokens.`;
             break;
           case "list":
-            prompt = `List elements of "${query}" for a ${role}. Return ONLY valid JSON {title, items}`;
+            prompt = `List elements of "${query}" for a ${role}. Return ONLY valid JSON {title, items}. Limit to 150 tokens.`;
             break;
           case "comparative":
-            prompt = `Compare ${query} for a ${role}. Return ONLY valid JSON {title, comparison_points}`;
+            prompt = `Compare ${query} for a ${role}. Return ONLY valid JSON {title, comparison_points}. Limit to 150 tokens.`;
             break;
           case "reason":
-            prompt = `Explain why "${query}" is important for a ${role}. Return ONLY valid JSON {title, reasons}`;
+            prompt = `Explain why "${query}" matters for a ${role}. Return ONLY valid JSON {title, reasons}. Limit to 150 tokens.`;
             break;
           default:
-            prompt = `Generate ONLY a JSON array of 5–10 micro-skills related to "${query}" for a ${role}.`;
+            prompt = `List 5–6 micro-skills for "${query}" relevant to a ${role}. Return ONLY JSON array. Limit to 120 tokens.`;
             break;
         }
       } else if (role && !query) {
-        prompt = `Generate ONLY a JSON array of the top 10 professional skills for a ${role}.`;
+        prompt = `List 6 core professional skills for a ${role}. Return ONLY JSON array. Limit to 100 tokens.`;
       }
     }
 
-    // === FALLBACK ===
-    else if (query) {
-      prompt = `Generate ONLY a JSON array of professional skills for "${query}".`;
-    }
+    // Timeout wrapper
+    const timeout = (ms: number) => new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms));
 
-    // OpenAI call
     let response;
     try {
-      response = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2,
-      });
+      response = await Promise.race([
+        client.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 200,
+          temperature: 0.2,
+        }),
+        timeout(3000),
+      ]);
     } catch {
-      response = await client.chat.completions.create({
-        model: "gpt-4o",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2,
-      });
+      return NextResponse.json({ skills: ["⚠️ Response timed out. Try again."] });
     }
 
-    let content = response.choices[0].message.content?.trim() || "[]";
+    let content = (response as any).choices[0].message.content?.trim() || "[]";
     content = content.replace(/```json/gi, "").replace(/```/g, "").trim();
 
     let skills: string[] = [];
@@ -135,10 +117,7 @@ export async function GET(req: Request) {
         if (parsed.pro_tip) skills.push(`💡 Pro Tip: ${parsed.pro_tip}`);
       }
     } catch {
-      skills = content
-        .split("\n")
-        .map(s => s.replace(/^\d+[\.\)]\s*/, "").replace(/["',\[\]]/g, "").trim())
-        .filter(s => s.length > 0);
+      skills = content.split("\n").map(s => s.replace(/^\d+[\.\)]\s*/, "").trim()).filter(s => s.length > 0);
     }
 
     return NextResponse.json({ skills });
