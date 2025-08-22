@@ -41,6 +41,19 @@ export async function GET(req: Request) {
   }
 
   try {
+    // === Relevance pre-check (Domain only) ===
+    if (query && role) {
+      const badMatchPhrases = ["boil an egg", "make a cup of tea", "iron a shirt"]; // you can extend
+      const qLower = query.toLowerCase();
+      if (badMatchPhrases.some(p => qLower.includes(p))) {
+        return NextResponse.json({
+          skills: [
+            "⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."
+          ]
+        });
+      }
+    }
+
     let prompt = "";
 
     // === Role-only (default) ===
@@ -133,7 +146,7 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
         .filter((s) => s.length > 0);
     }
 
-    // ✅ Relevance check only for Domain mode
+    // ✅ Post-response relevance check
     if (query && role) {
       const contextWords = [role, industry, func].filter(Boolean).map(s => s.toLowerCase());
       const joinedResponse = skills.join(" ").toLowerCase();
