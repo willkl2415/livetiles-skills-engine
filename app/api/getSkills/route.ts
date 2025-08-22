@@ -35,31 +35,32 @@ export async function GET(req: Request) {
   const query = searchParams.get("query");
   const industry = searchParams.get("industry") || "";
   const func = searchParams.get("func") || "";
+  const searchMode = searchParams.get("mode") || "domain"; // ✅ added
 
   if (!role && !query) {
     return NextResponse.json({ error: "Missing role or query" }, { status: 400 });
   }
 
   try {
-    // === Irrelevance filter (works for both Domain + General) ===
-    const irrelevantKeywords = [
-      "boil an egg",
-      "make a cup of tea",
-      "iron a shirt",
-      "cook",
-      "recipe",
-      "laundry",
-      "clean",
-      "household",
-      "domestic"
-    ];
+    // === Irrelevance filter (Domain mode ONLY) ===
+    if (query && searchMode === "domain") {
+      const irrelevantKeywords = [
+        "boil an egg",
+        "make a cup of tea",
+        "iron a shirt",
+        "cook",
+        "recipe",
+        "laundry",
+        "clean",
+        "household",
+        "domestic"
+      ];
 
-    if (query) {
       const qLower = query.toLowerCase();
       if (irrelevantKeywords.some(p => qLower.includes(p))) {
         return NextResponse.json({
           skills: [
-            "⚠️ That question doesn’t seem relevant to professional skills. Please rephrase."
+            "⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."
           ]
         });
       }
@@ -74,7 +75,7 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
     }
 
     // === Role + Query ===
-    else if (query && role) {
+    else if (query && role && searchMode === "domain") {
       const intent = detectIntent(query);
 
       switch (intent) {
@@ -111,7 +112,7 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
       }
     }
 
-    // === Query only (general skills) ===
+    // === Query only (General mode) ===
     else if (query) {
       prompt = `Generate ONLY a valid JSON array of 5-10 professional skills directly relevant to this query: "${query}".
 They must be workplace/professional skills only — do not return personal, domestic, or household abilities.
@@ -158,7 +159,7 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
     }
 
     // ✅ Domain-mode post-response relevance check
-    if (query && role) {
+    if (query && role && searchMode === "domain") {
       const contextWords = [role, industry, func].filter(Boolean).map(s => s.toLowerCase());
       const joinedResponse = skills.join(" ").toLowerCase();
 

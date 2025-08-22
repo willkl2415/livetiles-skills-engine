@@ -40,7 +40,8 @@ export default function RoleSelector() {
       if (selectedRole) url += `role=${encodeURIComponent(selectedRole)}&`;
       if (industry) url += `industry=${encodeURIComponent(industry)}&`;
       if (func) url += `func=${encodeURIComponent(func)}&`;
-      if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}`;
+      if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}&`;
+      url += `mode=${searchMode}`; // ✅ NEW: pass mode to API
 
       const res = await fetch(url);
       const data = await res.json();
@@ -65,7 +66,12 @@ export default function RoleSelector() {
     }
 
     // Fallback: local SKILLS object
-    if (selectedRole && industry && func && (SKILLS as any)[industry]?.[func]?.[selectedRole]) {
+    if (
+      selectedRole &&
+      industry &&
+      func &&
+      (SKILLS as any)[industry]?.[func]?.[selectedRole]
+    ) {
       const roleSkills = (SKILLS as any)[industry][func][selectedRole];
       setSkills(roleSkills);
       setCache((prev) => ({ ...prev, [selectedRole]: roleSkills }));
@@ -83,12 +89,20 @@ export default function RoleSelector() {
     if (details[skill]) return;
 
     try {
-      const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
+      const res = await fetch(
+        `/api/getSkillDetail?skill=${encodeURIComponent(skill)}`
+      );
       const data = await res.json();
-      setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
+      setDetails((prev) => ({
+        ...prev,
+        [skill]: data.detail || "No detail available.",
+      }));
     } catch (err) {
       console.error("Failed to fetch detail:", err);
-      setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
+      setDetails((prev) => ({
+        ...prev,
+        [skill]: "❌ Failed to load detail",
+      }));
     }
   };
 
@@ -105,7 +119,8 @@ export default function RoleSelector() {
   };
 
   const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
-  const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
+  const roles =
+    industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
 
   const handleSearch = () => {
     if (!query) return;
@@ -189,7 +204,9 @@ export default function RoleSelector() {
           </div>
           <div
             onClick={() => setSearchMode("general")}
-            className={`toggle-pill ${searchMode === "general" ? "active" : ""}`}
+            className={`toggle-pill ${
+              searchMode === "general" ? "active" : ""
+            }`}
           >
             General <span className="toggle-indicator green"></span>
           </div>
@@ -213,7 +230,9 @@ export default function RoleSelector() {
 
         {/* Notice */}
         {notice && (
-          <p className="text-sm text-blue-600 italic mb-2 text-center">{notice}</p>
+          <p className="text-sm text-blue-600 italic mb-2 text-center">
+            {notice}
+          </p>
         )}
 
         {/* Skills Grid */}
