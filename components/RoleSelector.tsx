@@ -29,20 +29,6 @@ export default function RoleSelector() {
     localStorage.setItem("skillsCache", JSON.stringify(cache));
   }, [cache]);
 
-  // ✅ Detect domain-style queries
-  const looksDomainLike = (q: string) => {
-    const lower = q.toLowerCase();
-    return (
-      lower.startsWith("how do i") ||
-      lower.startsWith("how to") ||
-      lower.startsWith("what are") ||
-      lower.includes("steps") ||
-      lower.includes("process") ||
-      lower.includes("plan") ||
-      lower.includes("strategy")
-    );
-  };
-
   const fetchSkills = async (selectedRole?: string, searchQuery?: string) => {
     let key = "";
     if (searchQuery && selectedRole) key = `${selectedRole}::${searchQuery}`;
@@ -52,6 +38,8 @@ export default function RoleSelector() {
     try {
       let url = "/api/getSkills?";
       if (selectedRole) url += `role=${encodeURIComponent(selectedRole)}&`;
+      if (industry) url += `industry=${encodeURIComponent(industry)}&`;
+      if (func) url += `func=${encodeURIComponent(func)}&`;
       if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}`;
 
       const res = await fetch(url);
@@ -121,16 +109,8 @@ export default function RoleSelector() {
 
   const handleSearch = () => {
     if (!query) return;
-
-    // ✅ If user is in "general" but query looks domain-like
-    if (searchMode === "general" && looksDomainLike(query) && role) {
-      setSearchMode("domain");
-      setNotice("🔀 We switched you to Domain mode because this looks like a role-specific question.");
-      fetchSkills(role, query);
-    } else {
-      setNotice("");
-      fetchSkills(searchMode === "domain" ? role : undefined, query);
-    }
+    setNotice(""); // ✅ clear notice
+    fetchSkills(searchMode === "domain" ? role : undefined, query);
   };
 
   return (

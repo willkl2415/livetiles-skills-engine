@@ -1,6 +1,6 @@
 // app/api/getSkills/route.ts
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";   // ✅ Force Node runtime
+export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const role = searchParams.get("role");
   const query = searchParams.get("query");
-  const industry = searchParams.get("industry") || ""; // ✅ optional, but useful for context
+  const industry = searchParams.get("industry") || "";
   const func = searchParams.get("func") || "";
 
   if (!role && !query) {
@@ -79,7 +79,7 @@ Return JSON: {title, steps, pro_tip}, where steps = pros/cons or differences in 
 Return JSON: {title, steps, pro_tip}, where steps = 3-5 concise justifications.`;
           break;
 
-        default: // fallback
+        default:
           prompt = `Generate ONLY a valid JSON array of 5-10 micro-skills directly relevant to this query: "${query}".
 Tailor the skills specifically for the role: ${role}.
 No explanations, no code block markers, no formatting --- just pure JSON array.`;
@@ -94,8 +94,6 @@ Make them general professional skills (not role-specific).
 No explanations, no code block markers, no formatting --- just pure JSON array.`;
     }
 
-    console.log("➡️ Prompt being sent:", prompt);
-
     let response;
     try {
       response = await client.chat.completions.create({
@@ -103,8 +101,7 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
         messages: [{ role: "user", content: prompt }],
         temperature: 0.2,
       });
-    } catch (err) {
-      console.warn("⚠️ gpt-4o-mini failed, retrying with gpt-4o:", err);
+    } catch {
       response = await client.chat.completions.create({
         model: "gpt-4o",
         messages: [{ role: "user", content: prompt }],
@@ -121,16 +118,13 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
       const parsed = JSON.parse(content);
 
       if (Array.isArray(parsed)) {
-        // ✅ Case 1: Simple array of skills
         skills = parsed;
       } else if (parsed && typeof parsed === "object" && parsed.steps) {
-        // ✅ Case 2: Object with {title, steps, pro_tip}
         if (parsed.title) skills.push(`📌 ${parsed.title}`);
         skills = skills.concat(parsed.steps);
         if (parsed.pro_tip) skills.push(`💡 Pro Tip: ${parsed.pro_tip}`);
       }
     } catch {
-      // ✅ Case 3: Fallback if GPT gave plain text lines
       skills = content
         .split("\n")
         .map((s) =>
@@ -139,7 +133,7 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
         .filter((s) => s.length > 0);
     }
 
-    // ✅ Context relevance check (prevents "boil an egg" etc.)
+    // ✅ Relevance check only for Domain mode
     if (query && role) {
       const contextWords = [role, industry, func].filter(Boolean).map(s => s.toLowerCase());
       const joinedResponse = skills.join(" ").toLowerCase();
@@ -156,7 +150,6 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
 
     return NextResponse.json({ skills });
   } catch (error) {
-    console.error("❌ Error fetching skills:", error);
     return NextResponse.json(
       { error: "Failed to fetch skills from OpenAI" },
       { status: 500 }
