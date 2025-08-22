@@ -207,10 +207,12 @@ export default function RoleSelector() {
             Domain <span className="toggle-indicator red"></span>
           </div>
           <div
-            onClick={() => setSearchMode("general")}
-            className={`toggle-pill ${
-              searchMode === "general" ? "active" : ""
-            }`}
+            className="toggle-pill disabled"
+            style={{
+              opacity: 0.5,
+              cursor: "not-allowed",
+              backgroundColor: "#ccc",
+            }}
           >
             General <span className="toggle-indicator green"></span>
           </div>
