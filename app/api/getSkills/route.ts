@@ -25,16 +25,23 @@ function detectIntent(query: string): "procedural" | "definition" | "list" | "co
   return "general";
 }
 
+// enforce 3s timeout without invalid signal
+async function withTimeout<T>(promise: Promise<T>, ms = 3000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout after 3s")), ms)),
+  ]);
+}
+
 async function callOpenAI(prompt: string) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 3000); // ⏱ enforce 3s timeout
   try {
-    return await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-      signal: controller.signal,
-    });
+    return await withTimeout(
+      client.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.2,
+      })
+    );
   } catch {
     // fallback to heavier model only if mini fails
     return await client.chat.completions.create({
@@ -42,8 +49,6 @@ async function callOpenAI(prompt: string) {
       messages: [{ role: "user", content: prompt }],
       temperature: 0.2,
     });
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -62,7 +67,7 @@ export async function GET(req: Request) {
   try {
     let prompt = "";
 
-    // auto-route: if General but query is clearly procedural/definition/etc. → force domain
+    // auto-route: if General but query is clearly role-specific, force Domain
     if (query && searchMode === "general") {
       const intent = detectIntent(query);
       if (intent !== "general") {
