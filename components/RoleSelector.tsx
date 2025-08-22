@@ -82,26 +82,37 @@ export default function RoleSelector() {
 
   const handleTileClick = async (skill: string) => {
     setOpenTile(openTile === skill ? null : skill);
+
     if (details[skill]) return;
 
     try {
       const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
       const data = await res.json();
-      setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
+      setDetails((prev) => ({
+        ...prev,
+        [skill]: data.detail || "No detail available.",
+      }));
     } catch (err) {
       console.error("Failed to fetch detail:", err);
-      setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
+      setDetails((prev) => ({
+        ...prev,
+        [skill]: "❌ Failed to load detail",
+      }));
     }
   };
 
   const handleClear = () => {
-    // ✅ Clear only query + results, keep Industry/Function/Role
     setQuery("");
     setSkills([]);
     setDetails({});
     setExpanded(false);
     setOpenTile(null);
     setNotice("");
+
+    // ✅ re-fetch default skills for current role if still selected
+    if (role) {
+      fetchSkills(role);
+    }
   };
 
   const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];

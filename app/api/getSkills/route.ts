@@ -7,7 +7,7 @@ import OpenAI from "openai";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// ✅ Intent detection works for both Domain + General
+// Intent detection
 function detectIntent(query: string): "procedural" | "definition" | "list" | "comparative" | "reason" | "general" {
   const q = query.toLowerCase();
 
@@ -40,63 +40,55 @@ export async function GET(req: Request) {
   try {
     let prompt = "";
 
-    // === GENERAL MODE (intent-aware) ===
+    // === GENERAL MODE ===
     if (query && searchMode === "general") {
       const intent = detectIntent(query);
       switch (intent) {
         case "procedural":
-          prompt = `Provide step-by-step instructions for: "${query}". Return ONLY JSON {title, steps, pro_tip}`;
+          prompt = `Provide clear step-by-step instructions for: "${query}". Return JSON {title, steps, pro_tip}`;
           break;
         case "definition":
-          prompt = `Explain clearly: "${query}". Return ONLY JSON {title, steps, pro_tip}`;
+          prompt = `Explain: "${query}". Return JSON {title, explanation, key_points}`;
           break;
         case "list":
-          prompt = `List the key items for: "${query}". Return ONLY JSON {title, steps, pro_tip}`;
+          prompt = `List key items for: "${query}". Return JSON {title, items}`;
           break;
         case "comparative":
-          prompt = `Compare: "${query}". Return ONLY JSON {title, steps, pro_tip}`;
+          prompt = `Compare: "${query}". Return JSON {title, comparison, key_points}`;
           break;
         case "reason":
-          prompt = `Explain why "${query}" is important. Return ONLY JSON {title, steps, pro_tip}`;
+          prompt = `Explain why "${query}" is important. Return JSON {title, explanation, key_points}`;
           break;
         default:
-          prompt = `Answer concisely: "${query}". Return ONLY JSON {title, steps, pro_tip}`;
+          prompt = `Answer clearly: "${query}". Return JSON {answer, details}`;
           break;
       }
     }
 
     // === DOMAIN MODE ===
     else if (searchMode === "domain") {
-      if (query) {
-        const irrelevantKeywords = ["boil an egg", "make a cup of tea", "iron a shirt", "cook", "recipe", "laundry", "clean", "household", "domestic"];
-        const qLower = query.toLowerCase();
-        if (irrelevantKeywords.some(p => qLower.includes(p))) {
-          return NextResponse.json({ skills: ["⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."] });
-        }
-      }
-
       if (role && !query) {
         prompt = `Return ONLY a valid JSON array of the top 10 professional skills for a ${role}. Pure JSON array.`;
       } else if (query && role) {
         const intent = detectIntent(query);
         switch (intent) {
           case "procedural":
-            prompt = `Generate ONLY a JSON object for how a ${role} should ${query}. Return {title, steps, pro_tip}`;
+            prompt = `As a ${role}, explain "${query}" in steps. Return JSON {title, steps, pro_tip}`;
             break;
           case "definition":
-            prompt = `Generate ONLY a JSON object that explains "${query}" for a ${role}. Return {title, steps, pro_tip}`;
+            prompt = `As a ${role}, define "${query}". Return JSON {title, explanation, key_points}`;
             break;
           case "list":
-            prompt = `Generate ONLY a JSON object listing elements of "${query}" for a ${role}. Return {title, steps, pro_tip}`;
+            prompt = `As a ${role}, list the key elements of "${query}". Return JSON {title, items}`;
             break;
           case "comparative":
-            prompt = `Generate ONLY a JSON object comparing ${query} for a ${role}. Return {title, steps, pro_tip}`;
+            prompt = `As a ${role}, compare ${query}. Return JSON {title, comparison, key_points}`;
             break;
           case "reason":
-            prompt = `Generate ONLY a JSON object explaining why "${query}" is important for a ${role}. Return {title, steps, pro_tip}`;
+            prompt = `As a ${role}, explain why "${query}" is important. Return JSON {title, explanation, key_points}`;
             break;
           default:
-            prompt = `Generate ONLY a valid JSON array of 5-10 micro-skills relevant to "${query}" tailored to ${role}. Pure JSON array.`;
+            prompt = `Return ONLY a valid JSON array of 5-10 micro-skills relevant to "${query}" for a ${role}.`;
             break;
         }
       }
@@ -104,10 +96,10 @@ export async function GET(req: Request) {
 
     // === FALLBACK ===
     else if (query) {
-      prompt = `Generate ONLY a valid JSON array of 5-10 professional skills for "${query}". Professional only.`;
+      prompt = `Generate ONLY a valid JSON array of 5-10 professional skills for "${query}".`;
     }
 
-    // === OpenAI Call ===
+    // OpenAI call
     let response;
     try {
       response = await client.chat.completions.create({
@@ -133,21 +125,14 @@ export async function GET(req: Request) {
         skills = parsed;
       } else if (parsed && typeof parsed === "object") {
         if (parsed.title) skills.push(`📌 ${parsed.title}`);
-        if (parsed.steps && Array.isArray(parsed.steps)) skills = skills.concat(parsed.steps);
+        if (parsed.steps) skills = skills.concat(parsed.steps);
+        if (parsed.items) skills = skills.concat(parsed.items);
+        if (parsed.answer) skills.push(parsed.answer);
         if (parsed.pro_tip) skills.push(`💡 Pro Tip: ${parsed.pro_tip}`);
+        if (parsed.key_points) skills = skills.concat(parsed.key_points);
       }
     } catch {
       skills = content.split("\n").map(s => s.replace(/^\d+[\.\)]\s*/, "").replace(/["',\[\]]/g, "").trim()).filter(s => s.length > 0);
-    }
-
-    // ✅ Domain-only relevance enforcement
-    if (query && role && searchMode === "domain") {
-      const contextWords = [role, industry, func].filter(Boolean).map(s => s.toLowerCase());
-      const joinedResponse = skills.join(" ").toLowerCase();
-      const relevant = contextWords.some(word => joinedResponse.includes(word));
-      if (!relevant) {
-        return NextResponse.json({ skills: ["⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."] });
-      }
     }
 
     return NextResponse.json({ skills });
