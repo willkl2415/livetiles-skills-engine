@@ -18,6 +18,7 @@ export default function RoleSelector() {
   const [expanded, setExpanded] = useState<boolean>(false);
   const [openTile, setOpenTile] = useState<string | null>(null);
 
+  // ✅ Load/save cache
   useEffect(() => {
     const savedCache = localStorage.getItem("skillsCache");
     if (savedCache) setCache(JSON.parse(savedCache));
@@ -49,9 +50,10 @@ export default function RoleSelector() {
         return;
       }
     } catch {
-      console.warn("API fetch failed, checking cache/local");
+      console.warn("❌ API fetch failed, trying cache/local");
     }
 
+    // Fallback: cache
     if (key && cache[key]) {
       setSkills(cache[key]);
       setExpanded(false);
@@ -59,12 +61,8 @@ export default function RoleSelector() {
       return;
     }
 
-    if (
-      selectedRole &&
-      industry &&
-      func &&
-      (SKILLS as any)[industry]?.[func]?.[selectedRole]
-    ) {
+    // Fallback: local SKILLS object
+    if (selectedRole && industry && func && (SKILLS as any)[industry]?.[func]?.[selectedRole]) {
       const roleSkills = (SKILLS as any)[industry][func][selectedRole];
       setSkills(roleSkills);
       setCache((prev) => ({ ...prev, [selectedRole]: roleSkills }));
@@ -109,10 +107,11 @@ export default function RoleSelector() {
     <div className="phone-frame">
       <div className="role-selector">
         <h1 className="app-title">
-          Welcome to LiveTiles™ <br />
-          <span className="subtitle">The Ultimate Skills Engine 🚀</span>
+          Welcome to Skills Forge™ <br />
+          <span className="subtitle">Knowledge at warp speed 🌌</span>
         </h1>
 
+        {/* Industry */}
         <p className="dropdown-label">🌐 Select Industry</p>
         <select
           value={industry}
@@ -131,6 +130,7 @@ export default function RoleSelector() {
           ))}
         </select>
 
+        {/* Function */}
         <p className="dropdown-label">⚡ Select Function</p>
         <select
           value={func}
@@ -149,6 +149,7 @@ export default function RoleSelector() {
           ))}
         </select>
 
+        {/* Role */}
         <p className="dropdown-label">🎯 Select Role</p>
         <select
           value={role}
@@ -167,8 +168,9 @@ export default function RoleSelector() {
           ))}
         </select>
 
+        {/* Search */}
         <p className="dropdown-label">🔍 Search Skills</p>
-        <div className="flex items-center gap-4 mb-4 justify-center">
+        <div className="toggle-container">
           <div
             onClick={() => setSearchMode("domain")}
             className={`toggle-pill ${searchMode === "domain" ? "active" : ""}`}
@@ -183,7 +185,7 @@ export default function RoleSelector() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mb-6 justify-center">
+        <div className="search-row">
           <input
             type="text"
             value={query}
@@ -201,6 +203,7 @@ export default function RoleSelector() {
           </button>
         </div>
 
+        {/* Skills Grid */}
         <div className="skills-grid">
           {(expanded ? skills : skills.slice(0, 3)).map((skill, idx) => (
             <TileCard
@@ -213,8 +216,9 @@ export default function RoleSelector() {
           ))}
         </div>
 
+        {/* Expand / Clear */}
         {skills.length > 0 && (
-          <div className="button-row">   {/* ✅ clean separation wrapper */}
+          <div className="button-row">
             {skills.length > 3 && (
               <button
                 onClick={() => setExpanded(!expanded)}
@@ -223,10 +227,7 @@ export default function RoleSelector() {
                 {expanded ? "Collapse" : "Expand"}
               </button>
             )}
-            <button
-              onClick={handleClear}
-              className="clear-btn"
-            >
+            <button onClick={handleClear} className="clear-btn">
               Clear
             </button>
           </div>

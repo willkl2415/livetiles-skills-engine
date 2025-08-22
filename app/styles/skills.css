@@ -34,8 +34,8 @@ body {
   text-align: center;
   margin-bottom: 0.25rem;
   background: linear-gradient(90deg, #9333ea, #3b82f6, #10b981);
-  background-clip: text;              /* ✅ standard property */
-  -webkit-background-clip: text;      /* ✅ vendor prefix */
+  background-clip: text;
+  -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
@@ -71,11 +71,11 @@ select:disabled {
   cursor: not-allowed;
 }
 
-/* === Toggle Pills (Fixed horizontal layout) === */
+/* === Toggle Pills === */
 .toggle-container {
   display: flex;
   justify-content: center;
-  gap: 1rem;           /* spacing between Domain / General */
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
@@ -88,7 +88,7 @@ select:disabled {
   font-weight: 500;
   transition: all 0.2s;
   text-align: center;
-  min-width: 90px;     /* ✅ keeps size consistent but not oversized */
+  min-width: 90px;
 }
 
 .toggle-pill.active {
@@ -105,12 +105,24 @@ select:disabled {
   margin-left: 6px;
 }
 
-.toggle-indicator.red {
-  background: red;
+.toggle-indicator.red { background: red; }
+.toggle-indicator.green { background: green; }
+
+/* === Search Row === */
+.search-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.toggle-indicator.green {
-  background: green;
+.search-row input {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
 }
 
 /* === Search Button === */
@@ -142,16 +154,18 @@ select:disabled {
 /* === Expand & Clear Buttons === */
 .expand-btn,
 .clear-btn {
-  padding: 0.5rem 1.75rem;
+  padding: 0.6rem 1.5rem;
   border-radius: 9999px;
   font-size: 0.9rem;
   font-weight: 600;
   border: none;
   cursor: pointer;
+  min-width: 100px;
+  transition: transform 0.2s;
 }
 
 .expand-btn {
-  background: #5aeb25;
+  background: #22c55e;
   color: white;
 }
 
@@ -160,10 +174,15 @@ select:disabled {
   color: white;
 }
 
-/* ✅ Ensure spacing between Expand & Clear buttons */
+.expand-btn:hover,
+.clear-btn:hover {
+  transform: scale(1.05);
+}
+
+/* === Button Row === */
 .button-row {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  margin-top: 1rem;
+  gap: 1rem;
+  margin-top: 1.25rem;
 }
