@@ -16,26 +16,18 @@ interface TileCardProps {
 
 export default function TileCard({ skill, detail, isOpen, onClick }: TileCardProps) {
   const bgColor = useMemo(() => {
-    const index =
-      skill.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
-      COLORS.length;
+    const index = skill.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % COLORS.length;
     return COLORS[index];
   }, [skill]);
 
   return (
     <div
-      className={`skill-card cursor-pointer transition ${
-        isOpen ? "ring-2 ring-purple-500" : "hover:opacity-90"
-      }`}
+      className={`skill-card cursor-pointer transition ${isOpen ? "ring-2 ring-purple-500" : "hover:opacity-90"}`}
       style={{ backgroundColor: bgColor }}
       onClick={onClick}
     >
       <span className="skill-text">{skill}</span>
-
-      {/* 🔑 Only show detail if open */}
-      {isOpen && detail && (
-        <p className="skill-detail mt-2 text-sm">{detail}</p>
-      )}
+      {isOpen && detail && <p className="skill-detail mt-2 text-sm">{detail}</p>}
     </div>
   );
 }

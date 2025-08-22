@@ -27,12 +27,12 @@ body {
   overflow-y: auto;
 }
 
-/* === Role Selector Container (centering) === */
+/* === Role Selector Container === */
 .role-selector {
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;   /* ✅ center all child elements */
+  align-items: center;
 }
 
 /* === Title & Subtitle === */
@@ -69,7 +69,7 @@ body {
 /* === Dropdowns === */
 select {
   width: 100%;
-  max-width: 300px;       /* ✅ constrain width */
+  max-width: 300px;
   padding: 0.6rem;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
@@ -166,7 +166,7 @@ select:disabled {
 .skills-grid {
   display: flex;
   flex-direction: column;
-  align-items: center;    /* ✅ center cards */
+  align-items: center;
   gap: 0.75rem;
   margin-top: 1rem;
   width: 100%;
@@ -174,7 +174,7 @@ select:disabled {
 
 .skills-grid > * {
   width: 100%;
-  max-width: 300px;       /* ✅ consistent width with dropdowns */
+  max-width: 300px;
 }
 
 /* === Expand & Clear Buttons === */
@@ -211,4 +211,47 @@ select:disabled {
   justify-content: center;
   gap: 1rem;
   margin-top: 1.25rem;
+}
+
+/* === Notice Banner === */
+.notice-banner {
+  background: #fff7ed;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  text-align: center;
+  margin: 0.75rem 0;
+  max-width: 300px;
+}
+
+/* === Structured Response Card === */
+.response-card {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  width: 100%;
+  max-width: 300px;
+}
+
+.response-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.response-card ul {
+  margin-left: 1.2rem;
+  list-style-type: disc;
+  font-size: 0.9rem;
+}
+
+.response-card p {
+  margin-top: 0.5rem;
+  font-style: italic;
+  font-size: 0.9rem;
 }
