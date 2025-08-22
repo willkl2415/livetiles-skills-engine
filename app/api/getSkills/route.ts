@@ -41,14 +41,25 @@ export async function GET(req: Request) {
   }
 
   try {
-    // === Relevance pre-check (Domain only) ===
-    if (query && role) {
-      const badMatchPhrases = ["boil an egg", "make a cup of tea", "iron a shirt"]; // you can extend
+    // === Irrelevance filter (works for both Domain + General) ===
+    const irrelevantKeywords = [
+      "boil an egg",
+      "make a cup of tea",
+      "iron a shirt",
+      "cook",
+      "recipe",
+      "laundry",
+      "clean",
+      "household",
+      "domestic"
+    ];
+
+    if (query) {
       const qLower = query.toLowerCase();
-      if (badMatchPhrases.some(p => qLower.includes(p))) {
+      if (irrelevantKeywords.some(p => qLower.includes(p))) {
         return NextResponse.json({
           skills: [
-            "⚠️ That question doesn’t seem relevant to your role. Try asking in General mode or rephrase."
+            "⚠️ That question doesn’t seem relevant to professional skills. Please rephrase."
           ]
         });
       }
@@ -102,8 +113,8 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
 
     // === Query only (general skills) ===
     else if (query) {
-      prompt = `Generate ONLY a valid JSON array of 5-10 micro-skills directly relevant to this query: "${query}".
-Make them general professional skills (not role-specific).
+      prompt = `Generate ONLY a valid JSON array of 5-10 professional skills directly relevant to this query: "${query}".
+They must be workplace/professional skills only — do not return personal, domestic, or household abilities.
 No explanations, no code block markers, no formatting --- just pure JSON array.`;
     }
 
@@ -146,7 +157,7 @@ No explanations, no code block markers, no formatting --- just pure JSON array.`
         .filter((s) => s.length > 0);
     }
 
-    // ✅ Post-response relevance check
+    // ✅ Domain-mode post-response relevance check
     if (query && role) {
       const contextWords = [role, industry, func].filter(Boolean).map(s => s.toLowerCase());
       const joinedResponse = skills.join(" ").toLowerCase();
