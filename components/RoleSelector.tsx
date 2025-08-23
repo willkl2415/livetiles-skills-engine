@@ -91,6 +91,7 @@ export default function RoleSelector() {
     setDetails({});
     setExpanded(false);
     setOpenTile(null);
+    setSearchMode("domain"); // reset back to domain so selectors unlock
   };
 
   const functions: string[] = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
