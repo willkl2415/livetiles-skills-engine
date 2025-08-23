@@ -8,11 +8,12 @@ export async function GET(req: Request) {
   const query = searchParams.get("query");
 
   if (!role || !industry || !func) {
-    return NextResponse.json({ skills: ["⚠️ Domain search requires role, industry, and function."] });
+    return NextResponse.json({ error: "Missing required parameters for Domain search" });
   }
 
-  // TODO: Replace with real domain logic
   return NextResponse.json({
-    skills: [`Result for "${query}" in ${role}, ${func}, ${industry}`],
+    skills: [
+      `Result for "${query}" in ${role}, ${func}, ${industry}`
+    ]
   });
 }

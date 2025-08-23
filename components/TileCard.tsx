@@ -5,25 +5,19 @@ export default function TileCard({
   detail,
   isOpen,
   onClick,
-  type = "skill",
 }: {
   skill: string;
   detail?: string;
   isOpen?: boolean;
   onClick?: () => void;
-  type?: "skill" | "warning";
 }) {
   return (
     <div
-      className={`p-4 rounded-xl shadow-md border transition ${
-        type === "warning"
-          ? "bg-yellow-100 border-yellow-400 text-yellow-800"
-          : "bg-white border-gray-200 hover:shadow-lg"
-      }`}
+      className="p-4 rounded-xl shadow-md bg-white border hover:shadow-lg transition"
       onClick={onClick}
     >
-      <span className="font-semibold">{skill}</span>
-      {isOpen && type === "skill" && detail && (
+      <span className="font-semibold text-gray-800">{skill}</span>
+      {isOpen && detail && (
         <p className="mt-2 text-sm text-gray-600">{detail}</p>
       )}
     </div>
