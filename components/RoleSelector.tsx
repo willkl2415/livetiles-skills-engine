@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ROLES } from "../app/data/roles.js";
-import { SKILLS } from "../app/data/skills.ts";
+import { SKILLS } from "../app/data/skill";
 import "../app/styles/skills.css";
 
 export default function RoleSelector() {
