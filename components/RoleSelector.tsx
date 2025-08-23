@@ -16,14 +16,12 @@ export default function RoleSelector() {
   const [searchMode, setSearchMode] = useState<"domain" | "general">("domain");
   const [expanded, setExpanded] = useState<boolean>(false);
   const [openTile, setOpenTile] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string>("");
 
   useEffect(() => {
     setSkills([]);
     setDetails({});
     setExpanded(false);
     setOpenTile(null);
-    setNotice("");
   }, [industry, func, role, searchMode]);
 
   const fetchSkills = async (selectedRole?: string, searchQuery?: string) => {
@@ -32,7 +30,7 @@ export default function RoleSelector() {
 
       if (searchMode === "domain") {
         if (!selectedRole && !role) {
-          setNotice("Domain search requires a role. Please select a role first.");
+          setSkills(["⚠️ Domain search requires a role. Please select a role first."]);
           return;
         }
         url = "/api/getDomainSkills?";
@@ -41,9 +39,10 @@ export default function RoleSelector() {
         if (func) url += `func=${encodeURIComponent(func)}&`;
         if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}`;
       } else {
-        // General search must not depend on industry/role
         if (industry || func || role) {
-          setNotice("General search ignores industry, function, and role. Please clear them or switch to Domain search.");
+          setSkills([
+            "⚠️ General search ignores industry, function, and role. Please clear them or switch to Domain search.",
+          ]);
           return;
         }
         url = `/api/getGeneralSkills?query=${encodeURIComponent(searchQuery || "")}`;
@@ -53,8 +52,7 @@ export default function RoleSelector() {
       const data = await res.json();
 
       if (data.error) {
-        setNotice(`⚠️ ${data.error}`);
-        setSkills([]);
+        setSkills([`⚠️ ${data.error}`]);
         return;
       }
 
@@ -62,7 +60,6 @@ export default function RoleSelector() {
         setSkills(data.skills);
         setExpanded(false);
         setOpenTile(null);
-        setNotice("");
         return;
       }
 
@@ -94,7 +91,6 @@ export default function RoleSelector() {
     setDetails({});
     setExpanded(false);
     setOpenTile(null);
-    setNotice("");
   };
 
   const functions: string[] = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
@@ -122,7 +118,7 @@ export default function RoleSelector() {
             setFunc("");
             setRole("");
           }}
-          disabled={searchMode === "general"} // lock out in general mode
+          disabled={searchMode === "general"} // disabled in general mode
         >
           <option value="">Select Industry</option>
           {Object.keys(ROLES).map((ind: string) => (
@@ -198,9 +194,6 @@ export default function RoleSelector() {
             Search
           </button>
         </div>
-
-        {/* Warning */}
-        {notice && <div className="notice-banner">⚠️ {notice}</div>}
 
         {/* Skills Grid */}
         <div className="skills-grid">
