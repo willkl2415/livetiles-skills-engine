@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { ROLES } from "../app/data/roles.js";
-import { SKILLS } from "../app/data/skills";
 import "../app/styles/skills.css";
 import TileCard from "./TileCard";
 
@@ -10,7 +9,7 @@ export default function RoleSelector() {
   const [industry, setIndustry] = useState<string>("");
   const [func, setFunc] = useState<string>("");
   const [role, setRole] = useState<string>("");
-  const [skills, setSkills] = useState<string[]>([]);
+  const [skills, setSkills] = useState<{ text: string; type: "skill" | "warning" }[]>([]);
   const [details, setDetails] = useState<Record<string, string>>({});
   const [query, setQuery] = useState<string>("");
   const [searchMode, setSearchMode] = useState<"domain" | "general">("domain");
@@ -18,7 +17,6 @@ export default function RoleSelector() {
   const [openTile, setOpenTile] = useState<string | null>(null);
 
   useEffect(() => {
-    setSkills([]);
     setDetails({});
     setExpanded(false);
     setOpenTile(null);
@@ -30,7 +28,7 @@ export default function RoleSelector() {
 
       if (searchMode === "domain") {
         if (!selectedRole && !role) {
-          setSkills(["⚠️ Domain search requires a role. Please select a role first."]);
+          setSkills([{ text: "⚠️ Domain search requires a role. Please select a role first.", type: "warning" }]);
           return;
         }
         url = "/api/getDomainSkills?";
@@ -40,9 +38,7 @@ export default function RoleSelector() {
         if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}`;
       } else {
         if (industry || func || role) {
-          setSkills([
-            "⚠️ General search ignores industry, function, and role. Please clear them or switch to Domain search.",
-          ]);
+          setSkills([{ text: "⚠️ General search ignores industry, function, and role. Please clear them or switch to Domain search.", type: "warning" }]);
           return;
         }
         url = `/api/getGeneralSkills?query=${encodeURIComponent(searchQuery || "")}`;
@@ -52,20 +48,20 @@ export default function RoleSelector() {
       const data = await res.json();
 
       if (data.error) {
-        setSkills([`⚠️ ${data.error}`]);
+        setSkills([{ text: `⚠️ ${data.error}`, type: "warning" }]);
         return;
       }
 
       if (data.skills && data.skills.length > 0) {
-        setSkills(data.skills);
+        setSkills(data.skills.map((s: string) => ({ text: s, type: "skill" })));
         setExpanded(false);
         setOpenTile(null);
         return;
       }
 
-      setSkills(["❌ No skills found"]);
+      setSkills([{ text: "❌ No skills found", type: "warning" }]);
     } catch {
-      setSkills(["❌ Failed to fetch skills"]);
+      setSkills([{ text: "❌ Failed to fetch skills", type: "warning" }]);
     }
   };
 
@@ -91,7 +87,7 @@ export default function RoleSelector() {
     setDetails({});
     setExpanded(false);
     setOpenTile(null);
-    setSearchMode("domain"); // reset back to domain so selectors unlock
+    setSearchMode("domain");
   };
 
   const functions: string[] = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
@@ -119,7 +115,7 @@ export default function RoleSelector() {
             setFunc("");
             setRole("");
           }}
-          disabled={searchMode === "general"} // disabled in general mode
+          disabled={searchMode === "general"}
         >
           <option value="">Select Industry</option>
           {Object.keys(ROLES).map((ind: string) => (
@@ -198,13 +194,14 @@ export default function RoleSelector() {
 
         {/* Skills Grid */}
         <div className="skills-grid">
-          {(expanded ? skills : skills.slice(0, 3)).map((skill: string, idx: number) => (
+          {(expanded ? skills : skills.slice(0, 3)).map((s, idx: number) => (
             <TileCard
               key={idx}
-              skill={skill}
-              detail={details[skill]}
-              isOpen={openTile === skill}
-              onClick={() => handleTileClick(skill)}
+              skill={s.text}
+              type={s.type}
+              detail={details[s.text]}
+              isOpen={openTile === s.text}
+              onClick={() => s.type === "skill" && handleTileClick(s.text)}
             />
           ))}
         </div>

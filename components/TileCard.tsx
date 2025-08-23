@@ -1,38 +1,30 @@
-"use client";
+import React from "react";
 
-import React, { useMemo } from "react";
-
-const COLORS = [
-  "#2563EB", "#16A34A", "#EA580C", "#DC2626", "#7C3AED",
-  "#DB2777", "#0D9488", "#4338CA", "#65A30D", "#BE123C",
-];
-
-interface TileCardProps {
+export default function TileCard({
+  skill,
+  detail,
+  isOpen,
+  onClick,
+  type = "skill",
+}: {
   skill: string;
   detail?: string;
-  isOpen: boolean;
+  isOpen?: boolean;
   onClick?: () => void;
-}
-
-export default function TileCard({ skill, detail, isOpen, onClick }: TileCardProps) {
-  const bgColor = useMemo(() => {
-    const index =
-      skill.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) %
-      COLORS.length;
-    return COLORS[index];
-  }, [skill]);
-
+  type?: "skill" | "warning";
+}) {
   return (
     <div
-      className={`skill-card cursor-pointer transition ${
-        isOpen ? "ring-2 ring-purple-500" : "hover:opacity-90"
+      className={`p-4 rounded-xl shadow-md border transition ${
+        type === "warning"
+          ? "bg-yellow-100 border-yellow-400 text-yellow-800"
+          : "bg-white border-gray-200 hover:shadow-lg"
       }`}
-      style={{ backgroundColor: bgColor }}
       onClick={onClick}
     >
-      <span className="skill-text">{skill}</span>
-      {isOpen && detail && (
-        <p className="skill-detail mt-2 text-sm">{detail}</p>
+      <span className="font-semibold">{skill}</span>
+      {isOpen && type === "skill" && detail && (
+        <p className="mt-2 text-sm text-gray-600">{detail}</p>
       )}
     </div>
   );
