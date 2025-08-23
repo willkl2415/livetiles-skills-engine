@@ -2,148 +2,117 @@
 
 import { useState, useEffect } from "react";
 import { ROLES } from "../app/data/roles.js";
-import { SKILLS } from "../app/data/skills";
+import { SKILLS } from "../app/data/skills.ts";
 import "../app/styles/skills.css";
-import TileCard from "./TileCard";
 
 export default function RoleSelector() {
   const [industry, setIndustry] = useState<string>("");
   const [func, setFunc] = useState<string>("");
   const [role, setRole] = useState<string>("");
   const [skills, setSkills] = useState<string[]>([]);
-  const [details, setDetails] = useState<Record<string, string>>({});
-  const [query, setQuery] = useState<string>("");
-  const [searchMode, setSearchMode] = useState<"domain" | "general">("domain");
-  const [expanded, setExpanded] = useState<boolean>(false);
-  const [openTile, setOpenTile] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string>("");
 
   useEffect(() => {
     setSkills([]);
-    setDetails({});
-    setExpanded(false);
-    setOpenTile(null);
   }, [industry, func, role]);
 
-  const fetchSkills = async (selectedRole?: string, searchQuery?: string) => {
+  const fetchSkills = async (selectedRole: string) => {
     try {
-      let url = "";
-      if (searchMode === "domain") {
-        url = "/api/getDomainSkills?";
-        if (selectedRole) url += `role=${encodeURIComponent(selectedRole)}&`;
-        if (industry) url += `industry=${encodeURIComponent(industry)}&`;
-        if (func) url += `func=${encodeURIComponent(func)}&`;
-        if (searchQuery) url += `query=${encodeURIComponent(searchQuery)}`;
-      } else {
-        url = `/api/getGeneralSkills?query=${encodeURIComponent(searchQuery || "")}`;
-      }
-
-      const res = await fetch(url);
+      const res = await fetch(`/api/getSkills?role=${encodeURIComponent(selectedRole)}`);
       const data = await res.json();
-
-      if (data.skills && data.skills.length > 0) {
+      if (data.skills) {
         setSkills(data.skills);
-        setExpanded(false);
-        setOpenTile(null);
         return;
       }
+    } catch (err) {
+      console.error("❌ API fetch failed, trying fallback");
+    }
 
-      setSkills(["❌ No skills found"]);
-    } catch {
-      setSkills(["❌ Failed to fetch skills"]);
+    if (SKILLS[selectedRole]) {
+      setSkills(SKILLS[selectedRole]);
+    } else {
+      setSkills(["No skills available for this role"]);
     }
   };
 
-  const handleTileClick = async (skill: string) => {
-    setOpenTile(openTile === skill ? null : skill);
-    if (details[skill]) return;
-
-    try {
-      const res = await fetch(`/api/getSkillDetail?skill=${encodeURIComponent(skill)}`);
-      const data = await res.json();
-      setDetails((prev) => ({ ...prev, [skill]: data.detail || "No detail available." }));
-    } catch {
-      setDetails((prev) => ({ ...prev, [skill]: "❌ Failed to load detail" }));
-    }
-  };
-
-  const handleClear = () => {
-    setIndustry("");
-    setFunc("");
-    setRole("");
-    setQuery("");
-    setSkills([]);
-    setDetails({});
-    setExpanded(false);
-    setOpenTile(null);
-    setNotice("");
-  };
-
-  const functions: string[] = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
-  const roles: string[] = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
-
-  const handleSearch = () => {
-    if (!query) return;
-    setNotice("");
-    fetchSkills(searchMode === "domain" ? role : undefined, query);
-  };
+  const functions = industry ? Object.keys(ROLES[industry] || {}) : [];
+  const roles = industry && func ? ROLES[industry][func] || [] : [];
 
   return (
-    <div className="phone-frame">
-      <div className="role-selector">
-        <h1 className="app-title">
-          Welcome to Skills Forge™ <br />
-          <span className="subtitle">Knowledge at warp speed 🌌</span>
-        </h1>
+    <div className="p-6 bg-blue-50 rounded-lg shadow-md max-w-xl mx-auto">
+      <h1 className="text-2xl font-bold text-center mb-4">
+        Welcome to Skills Forge™ <br />
+        <span className="text-purple-600">Knowledge at warp speed 🚀</span>
+      </h1>
 
-        <p className="dropdown-label">🌐 Select Industry</p>
-        <select value={industry} onChange={(e) => { setIndustry(e.target.value); setFunc(""); setRole(""); }}>
-          <option value="">Select Industry</option>
-          {Object.keys(ROLES).map((ind: string) => <option key={ind} value={ind}>{ind}</option>)}
-        </select>
+      <label className="block mb-2">🌐 Select Industry</label>
+      <select
+        className="w-full p-2 border rounded mb-4"
+        value={industry}
+        onChange={(e) => {
+          setIndustry(e.target.value);
+          setFunc("");
+          setRole("");
+          setSkills([]);
+        }}
+      >
+        <option value="">Select Industry</option>
+        {Object.keys(ROLES).map((ind) => (
+          <option key={ind} value={ind}>
+            {ind}
+          </option>
+        ))}
+      </select>
 
-        <p className="dropdown-label">⚡ Select Function</p>
-        <select value={func} onChange={(e) => { setFunc(e.target.value); setRole(""); }} disabled={!industry}>
-          <option value="">Select Function</option>
-          {functions.map((f: string) => <option key={f} value={f}>{f}</option>)}
-        </select>
+      <label className="block mb-2">⚡ Select Function</label>
+      <select
+        className="w-full p-2 border rounded mb-4"
+        value={func}
+        onChange={(e) => {
+          setFunc(e.target.value);
+          setRole("");
+          setSkills([]);
+        }}
+        disabled={!industry}
+      >
+        <option value="">Select Function</option>
+        {functions.map((f) => (
+          <option key={f} value={f}>
+            {f}
+          </option>
+        ))}
+      </select>
 
-        <p className="dropdown-label">🎯 Select Role</p>
-        <select value={role} onChange={(e) => { const selectedRole = e.target.value; setRole(selectedRole); if (searchMode === "domain") fetchSkills(selectedRole); }} disabled={!func}>
-          <option value="">Select Role</option>
-          {roles.map((r: string) => <option key={r} value={r}>{r}</option>)}
-        </select>
+      <label className="block mb-2">🎯 Select Role</label>
+      <select
+        className="w-full p-2 border rounded mb-4"
+        value={role}
+        onChange={(e) => {
+          const selectedRole = e.target.value;
+          setRole(selectedRole);
+          fetchSkills(selectedRole);
+        }}
+        disabled={!func}
+      >
+        <option value="">Select Role</option>
+        {roles.map((r) => (
+          <option key={r} value={r}>
+            {r}
+          </option>
+        ))}
+      </select>
 
-        <p className="dropdown-label">🔍 Search Skills</p>
-        <div className="toggle-container">
-          <div onClick={() => setSearchMode("domain")} className={`toggle-pill ${searchMode === "domain" ? "active" : ""}`}>
-            Domain <span className="toggle-indicator red"></span>
-          </div>
-          <div onClick={() => setSearchMode("general")} className={`toggle-pill ${searchMode === "general" ? "active" : ""}`}>
-            General <span className="toggle-indicator green"></span>
-          </div>
-        </div>
-
-        <div className="search-row">
-          <input type="text" value={query} placeholder="Type your question here" onChange={(e) => setQuery(e.target.value)} />
-          <button onClick={handleSearch} disabled={!query} className="search-btn">Search</button>
-        </div>
-
-        {notice && <div className="notice-banner">⚠️ {notice}</div>}
-
-        <div className="skills-grid">
-          {(expanded ? skills : skills.slice(0, 3)).map((skill: string, idx: number) => (
-            <TileCard key={idx} skill={skill} detail={details[skill]} isOpen={openTile === skill} onClick={() => handleTileClick(skill)} />
+      {skills.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {skills.map((skill, idx) => (
+            <div
+              key={idx}
+              className="p-4 rounded-xl shadow-md bg-white border hover:shadow-lg transition"
+            >
+              <span className="font-semibold text-gray-800">{skill}</span>
+            </div>
           ))}
         </div>
-
-        {skills.length > 0 && (
-          <div className="button-row">
-            {skills.length > 3 && <button onClick={() => setExpanded(!expanded)} className="expand-btn">{expanded ? "Collapse" : "Expand"}</button>}
-            <button onClick={handleClear} className="clear-btn">Clear</button>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
