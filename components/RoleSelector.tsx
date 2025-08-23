@@ -79,8 +79,8 @@ export default function RoleSelector() {
     setNotice("");
   };
 
-  const functions = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
-  const roles = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
+  const functions: string[] = industry ? Object.keys((ROLES as any)[industry] || {}) : [];
+  const roles: string[] = industry && func ? (ROLES as any)[industry]?.[func] || [] : [];
 
   const handleSearch = () => {
     if (!query) return;
@@ -99,19 +99,19 @@ export default function RoleSelector() {
         <p className="dropdown-label">🌐 Select Industry</p>
         <select value={industry} onChange={(e) => { setIndustry(e.target.value); setFunc(""); setRole(""); }}>
           <option value="">Select Industry</option>
-          {Object.keys(ROLES).map((ind) => <option key={ind} value={ind}>{ind}</option>)}
+          {Object.keys(ROLES).map((ind: string) => <option key={ind} value={ind}>{ind}</option>)}
         </select>
 
         <p className="dropdown-label">⚡ Select Function</p>
         <select value={func} onChange={(e) => { setFunc(e.target.value); setRole(""); }} disabled={!industry}>
           <option value="">Select Function</option>
-          {functions.map((f) => <option key={f} value={f}>{f}</option>)}
+          {functions.map((f: string) => <option key={f} value={f}>{f}</option>)}
         </select>
 
         <p className="dropdown-label">🎯 Select Role</p>
         <select value={role} onChange={(e) => { const selectedRole = e.target.value; setRole(selectedRole); if (searchMode === "domain") fetchSkills(selectedRole); }} disabled={!func}>
           <option value="">Select Role</option>
-          {roles.map((r) => <option key={r} value={r}>{r}</option>)}
+          {roles.map((r: string) => <option key={r} value={r}>{r}</option>)}
         </select>
 
         <p className="dropdown-label">🔍 Search Skills</p>
@@ -132,7 +132,7 @@ export default function RoleSelector() {
         {notice && <div className="notice-banner">⚠️ {notice}</div>}
 
         <div className="skills-grid">
-          {(expanded ? skills : skills.slice(0, 3)).map((skill, idx) => (
+          {(expanded ? skills : skills.slice(0, 3)).map((skill: string, idx: number) => (
             <TileCard key={idx} skill={skill} detail={details[skill]} isOpen={openTile === skill} onClick={() => handleTileClick(skill)} />
           ))}
         </div>
